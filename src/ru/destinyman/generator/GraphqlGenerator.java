@@ -25,6 +25,8 @@ public class GraphqlGenerator implements IGenerator{
         String[] orderDirection = {"ASC", "DESC"};
         outputData.append(CommonUtils.generateEnum("order_direction", orderDirection));
 
+        System.out.println(outputData);
+
         return outputData.toString();
     }
 
@@ -35,9 +37,9 @@ public class GraphqlGenerator implements IGenerator{
         outputData.append("type Query {\n")
             .append("get")
             .append(queryString)
-            .append("(args: Get")
+            .append("(args: ")
             .append(queryString)
-            .append("Request): Get")
+            .append("Request): ")
             .append(queryString)
             .append("Response");
         outputData.append("\n}");
@@ -81,7 +83,7 @@ public class GraphqlGenerator implements IGenerator{
         StringBuilder outputData = new StringBuilder("input ");
 
         outputData.append(CommonUtils.makeTitleCase(entityName, false))
-                .append("ListInput {\n")
+                .append("ListRequest {\n")
                 .append("skip: Int\ntake: Int\n")
                 .append("orderBy: [" + CommonUtils.makeTitleCase(entityName, false) + "ListOrder]\n")
                 .append("filter: [" + CommonUtils.makeTitleCase(entityName, false) + "ListFilterInput]\n")

@@ -4,6 +4,7 @@ import ru.destinyman.parsers.Entity;
 import ru.destinyman.parsers.MarkdownParser;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -49,7 +50,11 @@ public class MarkdownFileUtils implements IFileUtils {
     }
 
     @Override
-    public void write(List<String> textToWrite, Path fileToWrite) {
+    public void write(String textToWrite, Path fileToWrite) throws IOException {
+        FileOutputStream outputStream = new FileOutputStream(fileToWrite.toFile());
+        byte[] strToBytes = textToWrite.getBytes();
+        outputStream.write(strToBytes);
 
+        outputStream.close();
     }
 }
