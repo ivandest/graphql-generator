@@ -1,5 +1,9 @@
 package ru.destinyman.generator;
 
+import ru.destinyman.parsers.Entity;
+
+import java.util.List;
+
 public class CommonUtils {
 
     public static String makeTitleCase(String textToConvert, Boolean firstLower) {
@@ -17,6 +21,8 @@ public class CommonUtils {
                 textItem = Character.toTitleCase(textItem);
                 convertNext = false;
                 outputData.append(textItem);
+            } else if (Character.isUpperCase(textItem)) {
+                outputData.append(textItem);
             }
             else{
                 textItem = Character.toLowerCase(textItem);
@@ -30,7 +36,7 @@ public class CommonUtils {
     public static String generateEnum(String enumName, String[] fields){
         StringBuilder outputData = new StringBuilder("enum E" + makeTitleCase(enumName, false) + " {\n");
         for (String field : fields){
-            outputData.append(field.toUpperCase());
+            outputData.append(field.toUpperCase().trim()).append("\n");
         }
 
         outputData.append("}");
@@ -41,4 +47,23 @@ public class CommonUtils {
         return "E" + makeTitleCase(fieldName, false);
     }
 
+    public static String[] getFieldCodes(List<Entity> data){
+        String[] codes = new String[data.size()];
+        for (int i = 0; i < data.size(); i++) {
+            codes[i] = data.get(i).getCode().toUpperCase();
+        }
+        return codes;
+    }
+
+    public static String generateEnumFromComment(List<Entity> data) {
+        StringBuilder enumText = new StringBuilder();
+
+        for (Entity entity : data){
+            if (!entity.getComment().equals("")){
+                enumText.append(generateEnum(entity.getCode(), entity.getComment().split(",")));
+            }
+        }
+
+        return enumText.toString();
+    }
 }

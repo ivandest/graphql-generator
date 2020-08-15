@@ -1,7 +1,10 @@
 package ru.destinyman.generator;
 
 import ru.destinyman.parsers.Entity;
+import ru.destinyman.utils.MarkdownFileUtils;
 
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.List;
 
 public class GraphqlGenerator implements IGenerator{
@@ -24,6 +27,12 @@ public class GraphqlGenerator implements IGenerator{
         outputData.append("\n");
         String[] orderDirection = {"ASC", "DESC"};
         outputData.append(CommonUtils.generateEnum("order_direction", orderDirection));
+        outputData.append("\n");
+        outputData.append(CommonUtils.generateEnum(fileNameWithoutExtension + "ListOrder", CommonUtils.getFieldCodes(data)));
+        outputData.append("\n");
+        outputData.append(generateFilterInput(data, fileNameWithoutExtension));
+        outputData.append("\n");
+        outputData.append(CommonUtils.generateEnumFromComment(data));
 
         System.out.println(outputData);
 
@@ -49,11 +58,11 @@ public class GraphqlGenerator implements IGenerator{
 
     public String generateEntityType(List<Entity> data, String entityName){
         StringBuilder entityType = new StringBuilder("type ");
-        entityType.append(CommonUtils.makeTitleCase(entityName, false) + " {\n");
+        entityType.append(CommonUtils.makeTitleCase(entityName, false)).append(" {\n");
         for (Entity record : data){
-            entityType.append("\"" + record.getCaption() + "\"\n");
-            entityType.append(CommonUtils.makeTitleCase(record.getCode(), true) + ": ");
-            entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference()) + "\n");
+            entityType.append("\"").append(record.getCaption()).append("\"\n");
+            entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
+            entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference())).append("\n");
         }
         entityType.append("\n}");
         return entityType.toString();
@@ -68,10 +77,8 @@ public class GraphqlGenerator implements IGenerator{
                 .append(queryString)
                 .append("(input: Save")
                 .append(queryString)
-                .append("Input): ")
-                .append(queryString + "!\n")
-                .append("removeMany")
-                .append(queryString + "s")
+                .append("Input): ").append(queryString).append("!\n")
+                .append("removeMany").append(queryString).append("s")
                 .append("(ids: [ID!]!): Boolean!")
         ;
         outputData.append("\n}");
@@ -80,26 +87,36 @@ public class GraphqlGenerator implements IGenerator{
     }
 
     public String generateListRequest(String entityName){
-        StringBuilder outputData = new StringBuilder("input ");
 
-        outputData.append(CommonUtils.makeTitleCase(entityName, false))
-                .append("ListRequest {\n")
-                .append("skip: Int\ntake: Int\n")
-                .append("orderBy: [" + CommonUtils.makeTitleCase(entityName, false) + "ListOrder]\n")
-                .append("filter: [" + CommonUtils.makeTitleCase(entityName, false) + "ListFilterInput]\n")
-                .append("ids: [ID!]\n")
-                .append("}");
-
-        return outputData.toString();
+        return "input " + CommonUtils.makeTitleCase(entityName, false) +
+                "ListRequest {\n" +
+                "skip: Int\ntake: Int\n" + "orderBy: [" + CommonUtils.makeTitleCase(entityName, false) +
+                "ListOrder]\n" + "filter: [" + CommonUtils.makeTitleCase(entityName, false) +
+                "ListFilterInput]\n" +
+                "ids: [ID!]\n" +
+                "}";
     }
 
     public String generateOrderInput(String entityName){
         StringBuilder outputData = new StringBuilder("input ");
         String inputName = CommonUtils.makeTitleCase(entityName, false) + "ListOrder";
-        outputData.append(inputName + " {\n")
-                .append("field: E" + inputName + "\n")
+        outputData.append(inputName).append(" {\n").append("field: E").append(inputName).append("\n")
                 .append("direction: EOrderDirection\nordering: String\n")
                 .append("}");
+
+        return outputData.toString();
+    }
+
+    public String generateFilterInput(List<Entity> data, String entityName){
+        StringBuilder outputData = new StringBuilder("input ");
+        String inputName = CommonUtils.makeTitleCase(entityName, false) + "ListFilterInput";
+        outputData.append(inputName).append(" {\n");
+        for (Entity record : data){
+            outputData.append("\"").append(record.getCaption()).append("\"\n");
+            outputData.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
+            outputData.append(convertDataTypeForFilters(record.getDataType(), record.getCode(), record.getReference())).append("\n");
+        }
+        outputData.append("\n}");
 
         return outputData.toString();
     }
@@ -114,8 +131,34 @@ public class GraphqlGenerator implements IGenerator{
             case "id": {
                 if (reference.equals(""))
                     return "ID";
-                return reference;
+                return makeLinkedEntity(reference);
             }
+            case "varchar": return "String";
+            case "timestamp":
+            case "timestamptz": {
+                MarkdownFileUtils mfu = new MarkdownFileUtils();
+                try {
+                    mfu.write("scalar DateTime", Paths.get("global.graphql"));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return "DateTime";
+            }
+            case "enum": return CommonUtils.makeEnumName(code);
+        }
+
+        return converted;
+    }
+
+
+    private String convertDataTypeForFilters(String dataType, String code, String reference){
+        String converted = "";
+
+        if (dataType.contains("("))
+            dataType = dataType.substring(0, dataType.indexOf("("));
+
+        switch (dataType.trim()){
+            case "id": return "ID";
             case "varchar": return "String";
             case "timestamp":
             case "timestamptz":
@@ -126,5 +169,12 @@ public class GraphqlGenerator implements IGenerator{
         return converted;
     }
 
+    private String makeLinkedEntity(String entityName){
+        StringBuilder outputData = new StringBuilder("ID\n");
+        String entity = entityName.split("\\.")[0];
+        outputData.append(entity).append(": ");
+        outputData.append(CommonUtils.makeTitleCase(entity, false));
+        return outputData.toString();
+    }
 
 }
