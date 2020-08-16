@@ -1,6 +1,7 @@
 package ru.destinyman;
 
 import ru.destinyman.generator.GraphqlGenerator;
+import ru.destinyman.generator.ProtoGenerator;
 import ru.destinyman.parsers.Entity;
 import ru.destinyman.utils.MarkdownFileUtils;
 
@@ -36,13 +37,16 @@ public class Main {
             String[] filePathParts = pathToFile.split("/");
             String fileName = filePathParts[filePathParts.length - 1];
             GraphqlGenerator gg = new GraphqlGenerator();
+            ProtoGenerator pg = new ProtoGenerator();
             try {
                 String graphqlFile = fileName.split("\\.")[0] + ".graphql";
-
+                String protoFile = fileName.split("\\.")[0] + ".proto";
                 markdownFileUtils.write(gg.generate(data, fileName), Paths.get(graphqlFile));
+                markdownFileUtils.write(pg.generate(data, fileName), Paths.get(protoFile));
             } catch (IOException e) {
                 e.printStackTrace();
             }
+
         }
     }
 }

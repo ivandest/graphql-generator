@@ -23,6 +23,8 @@ public class GraphqlGenerator implements IGenerator{
         outputData.append("\n");
         outputData.append(generateListRequest(fileNameWithoutExtension));
         outputData.append("\n");
+        outputData.append(generateResponse(fileNameWithoutExtension));
+        outputData.append("\n");
         outputData.append(generateOrderInput(fileNameWithoutExtension));
         outputData.append("\n");
         String[] orderDirection = {"ASC", "DESC"};
@@ -33,6 +35,8 @@ public class GraphqlGenerator implements IGenerator{
         outputData.append(generateFilterInput(data, fileNameWithoutExtension));
         outputData.append("\n");
         outputData.append(CommonUtils.generateEnumFromComment(data));
+        outputData.append("\n");
+        outputData.append(generateSaveInput(data, fileNameWithoutExtension));
 
         System.out.println(outputData);
 
@@ -91,8 +95,8 @@ public class GraphqlGenerator implements IGenerator{
         return "input " + CommonUtils.makeTitleCase(entityName, false) +
                 "ListRequest {\n" +
                 "skip: Int\ntake: Int\n" + "orderBy: [" + CommonUtils.makeTitleCase(entityName, false) +
-                "ListOrder]\n" + "filter: [" + CommonUtils.makeTitleCase(entityName, false) +
-                "ListFilterInput]\n" +
+                "ListOrder]\n" + "filter: " + CommonUtils.makeTitleCase(entityName, false) +
+                "ListFilterInput\n" +
                 "ids: [ID!]\n" +
                 "}";
     }
@@ -150,7 +154,6 @@ public class GraphqlGenerator implements IGenerator{
         return converted;
     }
 
-
     private String convertDataTypeForFilters(String dataType, String code, String reference){
         String converted = "";
 
@@ -175,6 +178,24 @@ public class GraphqlGenerator implements IGenerator{
         outputData.append(entity).append(": ");
         outputData.append(CommonUtils.makeTitleCase(entity, false));
         return outputData.toString();
+    }
+
+    public String generateResponse(String entityName){
+        return "type " + CommonUtils.makeTitleCase(entityName, false) + "ListResponse {\n" +
+                "items: [" + CommonUtils.makeTitleCase(entityName, false) + "]!\n" +
+                "totalCount: Int!\n}";
+    }
+
+    public String generateSaveInput(List<Entity> data, String entityName){
+        StringBuilder entityType = new StringBuilder("input Save");
+        entityType.append(CommonUtils.makeTitleCase(entityName, false)).append("Input {\n");
+        for (Entity record : data){
+            entityType.append("\"").append(record.getCaption()).append("\"\n");
+            entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
+            entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference())).append("\n");
+        }
+        entityType.append("\n}");
+        return entityType.toString();
     }
 
 }
