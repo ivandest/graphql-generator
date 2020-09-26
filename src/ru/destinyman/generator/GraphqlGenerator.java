@@ -122,7 +122,7 @@ public class GraphqlGenerator implements IGenerator{
         for (Entity record : data){
             outputData.append("\"").append(record.getCaption()).append("\"\n");
             outputData.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
-            outputData.append(convertDataTypeForFilters(record.getDataType(), record.getCode(), record.getReference())).append("\n");
+            outputData.append(convertDataTypeForFilters(record.getDataType(), record.getCode())).append("\n");
         }
         outputData.append("\n}");
 
@@ -158,7 +158,7 @@ public class GraphqlGenerator implements IGenerator{
         return converted;
     }
 
-    private String convertDataTypeForFilters(String dataType, String code, String reference){
+    private String convertDataTypeForFilters(String dataType, String code){
         String converted = "";
 
         if (dataType.contains("("))

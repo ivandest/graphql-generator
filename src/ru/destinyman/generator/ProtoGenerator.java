@@ -7,29 +7,35 @@ public class ProtoGenerator implements IGenerator {
     @Override
     public String generate(List<Entity> data, String fileName) {
         String fileNameWithoutExtension = fileName.substring(0, fileName.indexOf('.'));
-        StringBuilder outputData = new StringBuilder("syntax = \"proto3\";\n" +
-                "\n" +
-                "package org.service;");
-        outputData.append("\n");
-        outputData.append(generateService(fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateListRequest(fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateListResponse(fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateOrderInput(fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateEntityType(data, fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateFilterInput(data, fileNameWithoutExtension));
-        outputData.append("\n");
         String[] orderDirection = {"ASC", "DESC"};
-        outputData.append(CommonUtils.generateProtoEnum("order_direction", orderDirection));
-        outputData.append("\n");
-        outputData.append(CommonUtils.generateProtoEnum(fileNameWithoutExtension + "ListOrderFields", CommonUtils.getFieldCodes(data)));
-        outputData.append("\n");
-        outputData.append(CommonUtils.generateProtoEnumFromComment(data));
-        return outputData.toString();
+        return "syntax = \"proto3\";\n" +
+                "\n" +
+                "package org.service;" + "\n" +
+                generateService(fileNameWithoutExtension) +
+                "\n" +
+                generateListRequest(fileNameWithoutExtension) +
+                "\n" +
+                generateListResponse(fileNameWithoutExtension) +
+                "\n" +
+                generateOrderInput(fileNameWithoutExtension) +
+                "\n" +
+                generateEntityType(data, fileNameWithoutExtension) +
+                "\n" +
+                generateFilterInput(data, fileNameWithoutExtension) +
+                "\n" +
+                CommonUtils.generateProtoEnum("order_direction", orderDirection) +
+                "\n" +
+                CommonUtils.generateProtoEnum(fileNameWithoutExtension + "ListOrderFields", CommonUtils.getFieldCodes(data)) +
+                "\n" +
+                CommonUtils.generateProtoEnumFromComment(data) +
+                "\n" +
+                generateSaveRequest(data, fileNameWithoutExtension) +
+                "\n" +
+                generateSaveResponse(fileNameWithoutExtension) +
+                "\n" +
+                generateRemoveRequest(fileNameWithoutExtension) +
+                "\n" +
+                generateRemoveResponse(fileNameWithoutExtension);
     }
 
     @Override
@@ -57,6 +63,8 @@ public class ProtoGenerator implements IGenerator {
                 "returns (" + CommonUtils.makeTitleCase(entityName, false) + "ListResponse);\n" +
                 "rpc Save" + CommonUtils.makeTitleCase(entityName, false) + " (Save" + CommonUtils.makeTitleCase(entityName, false) + "Request) " +
                 "returns (Save" + CommonUtils.makeTitleCase(entityName, false) + "Response);\n" +
+                "rpc RemoveMany" + CommonUtils.makeTitleCase(entityName, false) + "s (RemoveMany" + CommonUtils.makeTitleCase(entityName, false) + "Request) " +
+                "returns (RemoveMany" + CommonUtils.makeTitleCase(entityName, false) + "Response);\n" +
                 "}";
     }
 
@@ -74,6 +82,30 @@ public class ProtoGenerator implements IGenerator {
         return "message " + CommonUtils.makeTitleCase(entityName, false) + "ListResponse {\n" +
                 "repeated " + CommonUtils.makeTitleCase(entityName, false) + " items = 1;\n" +
                 "uint32 total_count = 2;\n}";
+    }
+
+    public String generateSaveRequest(List<Entity> data, String entityName){
+        StringBuilder entityType = new StringBuilder("message Save");
+        entityType.append(CommonUtils.makeTitleCase(entityName, false)).append("Request {\n");
+        generateFieldsWithTypesForEntity(data, entityType);
+        return entityType.toString();
+    }
+
+    public String generateSaveResponse(String entityName){
+        return "message Save" + CommonUtils.makeTitleCase(entityName, false) + "Response {\n" +
+                CommonUtils.makeTitleCase(entityName, false) + " result = 1;\n" +
+                "}";
+    }
+
+    public String generateRemoveRequest(String entityName){
+        return "message RemoveMany" + CommonUtils.makeTitleCase(entityName, false) + "Request {\n" +
+                "repeated string ids = 1;\n}\n";
+    }
+
+    public String generateRemoveResponse(String entityName){
+        return "message RemoveMany" + CommonUtils.makeTitleCase(entityName, false) + "Response {\n" +
+                "bool result = 1;\n" +
+                "}";
     }
 
     public String generateFilterInput(List<Entity> data, String entityName){
