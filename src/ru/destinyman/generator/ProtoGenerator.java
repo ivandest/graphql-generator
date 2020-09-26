@@ -1,10 +1,6 @@
 package ru.destinyman.generator;
 
 import ru.destinyman.parsers.Entity;
-import ru.destinyman.utils.MarkdownFileUtils;
-
-import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.List;
 
 public class ProtoGenerator implements IGenerator {
@@ -40,14 +36,19 @@ public class ProtoGenerator implements IGenerator {
     public String generateEntityType(List<Entity> data, String entityName) {
         StringBuilder entityType = new StringBuilder("message ");
         entityType.append(CommonUtils.makeTitleCase(entityName, false)).append(" {\n");
+        generateFieldsWithTypesForEntity(data, entityType);
+        return entityType.toString();
+    }
+
+    private void generateFieldsWithTypesForEntity(List<Entity> data, StringBuilder entityType){
         int i = 1;
         for (Entity record : data){
-            entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference())).append(" ");
+            entityType.append(convertDataType(record.getDataType(), record.getCode())).append(" ");
             entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(" = ").append(i).append(";\n");
             i++;
         }
         entityType.append("}");
-        return entityType.toString();
+
     }
 
     public String generateService(String entityName) {
@@ -79,13 +80,7 @@ public class ProtoGenerator implements IGenerator {
         StringBuilder outputData = new StringBuilder("message ");
         String inputName = CommonUtils.makeTitleCase(entityName, false) + "ListFilterInput";
         outputData.append(inputName).append(" {\n");
-        int i = 1;
-        for ( Entity record : data){
-            outputData.append(convertDataTypeForFilters(record.getDataType(), record.getCode(), record.getReference())).append(" ");
-            outputData.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(" = ").append(i).append(";\n");
-            i++;
-        }
-        outputData.append("\n}");
+        generateFieldsWithTypesForEntity(data, outputData);
 
         return outputData.toString();
     }
@@ -94,47 +89,25 @@ public class ProtoGenerator implements IGenerator {
         StringBuilder outputData = new StringBuilder("message ");
         String inputName = CommonUtils.makeTitleCase(entityName, false) + "ListOrder";
         outputData.append(inputName).append(" {\n").append("E").append(inputName).append("Fields field = 1;\n")
-                .append("EOrderDirection direction = 2;\n")
-                .append("}\n");
+                .append("EOrderDirection direction = 2;\n}\n");
 
         return outputData.toString();
     }
 
-    private String convertDataType(String dataType, String code, String reference){
+    private String convertDataType(String dataType, String code){
         String converted = "";
 
         if (dataType.contains("("))
             dataType = dataType.substring(0, dataType.indexOf("("));
 
         switch (dataType.trim()){
-            case "id": {
-               // if (reference.equals(""))
-                    return "string";
-                //return makeLinkedEntity(reference);
-            }
-            case "varchar": return "string";
+            case "id":
+            case "varchar":
+                return "string";
             case "timestamp":
             case "timestamptz": {
                 return "uint64";
             }
-            case "enum": return CommonUtils.makeEnumName(code);
-        }
-
-        return converted;
-    }
-
-    private String convertDataTypeForFilters(String dataType, String code, String reference){
-        String converted = "";
-
-        if (dataType.contains("("))
-            dataType = dataType.substring(0, dataType.indexOf("("));
-
-        switch (dataType.trim()){
-            case "id": return "string";
-            case "varchar": return "string";
-            case "timestamp":
-            case "timestamptz":
-                return "uint64";
             case "enum": return CommonUtils.makeEnumName(code);
         }
 
