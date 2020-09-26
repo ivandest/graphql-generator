@@ -14,16 +14,16 @@ public class Main {
 
     public static void main(String[] args) {
         if (args.length == 0){
-            System.out.println("USAGE: graphql-generator.jar [options] file_path" +
-                    "OPTIONS:\n " +
-                    "-q, --queries-only - generate only gql-queries\n" +
-                    "-h, --help - get current usage info\n" +
-                    "-a, --all - generate graphql, protofiles and gql-queries\n" +
-                    "-qn, --no-query - generate graphql, protofiles WITHOUT gql-queries\n" +
-                    "-f, --filters - with filters on each entity attribute\n" +
-                    "-o, --order - with sort block\n" +
-                    "--filter-types - with filter type on each entity attribute\n" +
-                    "--order-types - with order type on each entity attribute"
+            System.out.println("USAGE: graphql-generator.jar [options] file_path\n" +
+                    "OPTIONS:\n" +
+                    "   -q, --queries-only - generate only gql-queries\n" +
+                    "   -h, --help - get current usage info\n" +
+                    "   -a, --all - generate graphql, protofiles and gql-queries\n" +
+                    "   -qn, --no-query - generate graphql, protofiles WITHOUT gql-queries\n" +
+                    "   -f, --filters - with filters on each entity attribute\n" +
+                    "   -o, --order - with sort block\n" +
+                    "   --filter-types - with filter type on each entity attribute\n" +
+                    "   --order-types - with order type on each entity attribute"
             );
             System.exit(0);
         }
