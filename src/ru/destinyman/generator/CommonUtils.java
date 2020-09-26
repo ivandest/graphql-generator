@@ -43,6 +43,16 @@ public class CommonUtils {
         return outputData.toString();
     }
 
+    public static String generateProtoEnum(String enumName, String[] fields){
+        StringBuilder outputData = new StringBuilder("enum E" + makeTitleCase(enumName, false) + " {\n");
+        for (int i = 0; i < fields.length; i++){
+            outputData.append(fields[i].toUpperCase().trim()).append(" = ").append(i).append(";\n");
+        }
+
+        outputData.append("}");
+        return outputData.toString();
+    }
+
     public static String makeEnumName(String fieldName){
         return "E" + makeTitleCase(fieldName, false);
     }
@@ -61,6 +71,18 @@ public class CommonUtils {
         for (Entity entity : data){
             if (!entity.getComment().equals("")){
                 enumText.append(generateEnum(entity.getCode(), entity.getComment().split(",")));
+            }
+        }
+
+        return enumText.toString();
+    }
+
+    public static String generateProtoEnumFromComment(List<Entity> data) {
+        StringBuilder enumText = new StringBuilder();
+
+        for (Entity entity : data){
+            if (!entity.getComment().equals("")){
+                enumText.append(generateProtoEnum(entity.getCode(), entity.getComment().split(",")));
             }
         }
 

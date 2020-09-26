@@ -30,7 +30,7 @@ public class GraphqlGenerator implements IGenerator{
         String[] orderDirection = {"ASC", "DESC"};
         outputData.append(CommonUtils.generateEnum("order_direction", orderDirection));
         outputData.append("\n");
-        outputData.append(CommonUtils.generateEnum(fileNameWithoutExtension + "ListOrder", CommonUtils.getFieldCodes(data)));
+        outputData.append(CommonUtils.generateEnum(fileNameWithoutExtension + "ListOrderFields", CommonUtils.getFieldCodes(data)));
         outputData.append("\n");
         outputData.append(generateFilterInput(data, fileNameWithoutExtension));
         outputData.append("\n");
@@ -68,7 +68,7 @@ public class GraphqlGenerator implements IGenerator{
             entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
             entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference())).append("\n");
         }
-        entityType.append("\n}");
+        entityType.append("}");
         return entityType.toString();
     }
 
@@ -104,7 +104,7 @@ public class GraphqlGenerator implements IGenerator{
     public String generateOrderInput(String entityName){
         StringBuilder outputData = new StringBuilder("input ");
         String inputName = CommonUtils.makeTitleCase(entityName, false) + "ListOrder";
-        outputData.append(inputName).append(" {\n").append("field: E").append(inputName).append("\n")
+        outputData.append(inputName).append(" {\n").append("field: E").append(inputName).append("Fields\n")
                 .append("direction: EOrderDirection\nordering: String\n")
                 .append("}");
 
