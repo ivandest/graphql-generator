@@ -63,13 +63,17 @@ public class GraphqlGenerator implements IGenerator{
     public String generateEntityType(List<Entity> data, String entityName){
         StringBuilder entityType = new StringBuilder("type ");
         entityType.append(CommonUtils.makeTitleCase(entityName, false)).append(" {\n");
+        generateFieldsWithTypesForEntity(data, entityType);
+        entityType.append("}");
+        return entityType.toString();
+    }
+
+    private void generateFieldsWithTypesForEntity(List<Entity> data, StringBuilder entityType) {
         for (Entity record : data){
             entityType.append("\"").append(record.getCaption()).append("\"\n");
             entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
             entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference())).append("\n");
         }
-        entityType.append("}");
-        return entityType.toString();
     }
 
     public String generateMutation(String entityName){
@@ -189,12 +193,8 @@ public class GraphqlGenerator implements IGenerator{
     public String generateSaveInput(List<Entity> data, String entityName){
         StringBuilder entityType = new StringBuilder("input Save");
         entityType.append(CommonUtils.makeTitleCase(entityName, false)).append("Input {\n");
-        for (Entity record : data){
-            entityType.append("\"").append(record.getCaption()).append("\"\n");
-            entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
-            entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference())).append("\n");
-        }
-        entityType.append("\n}");
+        generateFieldsWithTypesForEntity(data, entityType);
+        entityType.append("}");
         return entityType.toString();
     }
 
