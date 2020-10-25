@@ -3,10 +3,9 @@ package ru.destinyman.utils;
 import ru.destinyman.parsers.Entity;
 import ru.destinyman.parsers.MarkdownParser;
 
-import java.io.BufferedReader;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,10 +17,8 @@ public class MarkdownFileUtils implements IFileUtils {
         List<Entity> result = new ArrayList<>();
         MarkdownParser markdownParser = new MarkdownParser();
 
-        BufferedReader reader;
         int index = 0;
-        try {
-            reader = new BufferedReader(new FileReader(fileToRead.toFile()));
+        try (BufferedReader reader = Files.newBufferedReader(fileToRead)) {
             int i = 0;
             while (reader.read() != -1) {
                 String currentLine = reader.readLine();
@@ -33,7 +30,6 @@ public class MarkdownFileUtils implements IFileUtils {
                 result.add(record);
                 i++;
             }
-            reader.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -45,16 +41,17 @@ public class MarkdownFileUtils implements IFileUtils {
             }
         }
 
-
         return result;
     }
 
     @Override
-    public void write(String textToWrite, Path fileToWrite) throws IOException {
-        FileOutputStream outputStream = new FileOutputStream(fileToWrite.toFile());
-        byte[] strToBytes = textToWrite.getBytes();
-        outputStream.write(strToBytes);
+    public void write(String textToWrite, Path fileToWrite) {
 
-        outputStream.close();
+        try (BufferedWriter writer = Files.newBufferedWriter(fileToWrite, StandardCharsets.UTF_8)) {
+                writer.append(textToWrite);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

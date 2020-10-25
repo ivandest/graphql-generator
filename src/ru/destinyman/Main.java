@@ -38,14 +38,10 @@ public class Main {
             String fileName = filePathParts[filePathParts.length - 1];
             GraphqlGenerator gg = new GraphqlGenerator();
             ProtoGenerator pg = new ProtoGenerator();
-            try {
-                String graphqlFile = fileName.split("\\.")[0] + ".graphql";
-                String protoFile = fileName.split("\\.")[0] + ".proto";
-                markdownFileUtils.write(gg.generate(data, fileName), Paths.get(graphqlFile));
-                markdownFileUtils.write(pg.generate(data, fileName), Paths.get(protoFile));
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            String graphqlFile = fileName.split("\\.")[0] + ".graphql";
+            String protoFile = fileName.split("\\.")[0] + ".proto";
+            markdownFileUtils.write(gg.generate(data, fileName), Paths.get(graphqlFile));
+            markdownFileUtils.write(pg.generate(data, fileName), Paths.get(protoFile));
 
         }
     }

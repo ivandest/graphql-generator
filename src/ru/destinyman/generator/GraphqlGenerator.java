@@ -3,7 +3,6 @@ package ru.destinyman.generator;
 import ru.destinyman.parsers.Entity;
 import ru.destinyman.utils.MarkdownFileUtils;
 
-import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -145,11 +144,7 @@ public class GraphqlGenerator implements IGenerator{
             case "timestamp":
             case "timestamptz": {
                 MarkdownFileUtils mfu = new MarkdownFileUtils();
-                try {
-                    mfu.write("scalar DateTime", Paths.get("global.graphql"));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                mfu.write("scalar DateTime", Paths.get("global.graphql"));
                 return "DateTime";
             }
             case "enum": return CommonUtils.makeEnumName(code);
