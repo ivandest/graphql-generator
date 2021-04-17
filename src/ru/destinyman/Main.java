@@ -43,14 +43,15 @@ public class Main {
                 GraphqlGenerator gg = new GraphqlGenerator();
                 ProtoGenerator pg = new ProtoGenerator();
 
-                String fileName = "rejection-service";
+                String fileName = args[2] + "-service";
                 String graphqlFile = fileName.split("\\.")[0] + ".graphql";
                 String protoFile = fileName.split("\\.")[0] + ".proto";
                 MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
 
-                entities = postgresDbObjects.getTableDescription(connection, "rejection.rejection");
-                markdownFileUtils.write(gg.generate(entities.get("rejection.rejection"), fileName), Paths.get(graphqlFile));
-                markdownFileUtils.write(pg.generate(entities.get("rejection.rejection"), fileName), Paths.get(protoFile));
+                String tableName = args[2] + "." + args[3];
+                entities = postgresDbObjects.getTableDescription(connection, tableName);
+                markdownFileUtils.write(gg.generate(entities.get(tableName), fileName), Paths.get(graphqlFile));
+                markdownFileUtils.write(pg.generate(entities.get(tableName), fileName), Paths.get(protoFile));
             }
 
         } else {
