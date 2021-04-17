@@ -1,10 +1,9 @@
-package ru.destinyman.utils;
+package ru.destinyman.utils.file;
 
 import ru.destinyman.parsers.Entity;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 
 public interface IFileUtils {

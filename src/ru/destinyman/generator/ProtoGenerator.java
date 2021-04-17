@@ -6,7 +6,7 @@ import java.util.List;
 public class ProtoGenerator implements IGenerator {
     @Override
     public String generate(List<Entity> data, String fileName) {
-        String fileNameWithoutExtension = fileName.substring(0, fileName.indexOf('.'));
+        String fileNameWithoutExtension = fileName.indexOf('.') != -1 ? fileName.substring(0, fileName.indexOf('.')) : fileName;
         String[] orderDirection = {"ASC", "DESC"};
         return "syntax = \"proto3\";\n" +
                 "\n" +
@@ -50,7 +50,7 @@ public class ProtoGenerator implements IGenerator {
         int i = 1;
         for (Entity record : data){
             entityType.append(convertDataType(record.getDataType(), record.getCode())).append(" ");
-            entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(" = ").append(i).append(";\n");
+            entityType.append(CommonUtils.makeSnakeCase(record.getCode(), true)).append(" = ").append(i).append(";\n");
             i++;
         }
         entityType.append("}");

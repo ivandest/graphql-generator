@@ -3,12 +3,15 @@ package ru.destinyman;
 import ru.destinyman.generator.GraphqlGenerator;
 import ru.destinyman.generator.ProtoGenerator;
 import ru.destinyman.parsers.Entity;
-import ru.destinyman.utils.MarkdownFileUtils;
+import ru.destinyman.utils.database.PostgresConnection;
+import ru.destinyman.utils.database.PostgresDbObjects;
+import ru.destinyman.utils.file.MarkdownFileUtils;
 
-import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Main {
 
@@ -23,12 +26,32 @@ public class Main {
                     "   -f, --filters - with filters on each entity attribute\n" +
                     "   -o, --order - with sort block\n" +
                     "   --filter-types - with filter type on each entity attribute\n" +
-                    "   --order-types - with order type on each entity attribute"
+                    "   --order-types - with order type on each entity attribute\n" +
+                    "   --from-database - reverse engineering of specified database"
             );
             System.exit(0);
         }
 
-        if (args[0].startsWith("-") || args[0].startsWith("--")){
+        if (args[1].startsWith("-") || args[1].startsWith("--")){
+            if (args[1].startsWith("--from-database")) {
+                PostgresConnection pgConn = new PostgresConnection();
+                Connection connection = pgConn.create();
+
+                Map<String, List<Entity>> entities;
+                PostgresDbObjects postgresDbObjects = new PostgresDbObjects();
+
+                GraphqlGenerator gg = new GraphqlGenerator();
+                ProtoGenerator pg = new ProtoGenerator();
+
+                String fileName = "rejection-service";
+                String graphqlFile = fileName.split("\\.")[0] + ".graphql";
+                String protoFile = fileName.split("\\.")[0] + ".proto";
+                MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
+
+                entities = postgresDbObjects.getTableDescription(connection, "rejection.rejection");
+                markdownFileUtils.write(gg.generate(entities.get("rejection.rejection"), fileName), Paths.get(graphqlFile));
+                markdownFileUtils.write(pg.generate(entities.get("rejection.rejection"), fileName), Paths.get(protoFile));
+            }
 
         } else {
             String pathToFile = args[0];

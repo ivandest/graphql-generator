@@ -1,7 +1,7 @@
 package ru.destinyman.generator;
 
 import ru.destinyman.parsers.Entity;
-import ru.destinyman.utils.MarkdownFileUtils;
+import ru.destinyman.utils.file.MarkdownFileUtils;
 
 import java.nio.file.Paths;
 import java.util.List;
@@ -10,7 +10,7 @@ public class GraphqlGenerator implements IGenerator{
     @Override
     public String generate(List<Entity> data, String fileName) {
 
-        String fileNameWithoutExtension = fileName.substring(0, fileName.indexOf('.'));
+        String fileNameWithoutExtension = fileName.indexOf('.') != -1 ? fileName.substring(0, fileName.indexOf('.')) : fileName;
 
         StringBuilder outputData = new StringBuilder("schema {\nquery: Query\nmutation: Mutation\n}\n");
 

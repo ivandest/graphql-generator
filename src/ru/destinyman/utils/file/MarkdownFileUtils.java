@@ -1,9 +1,11 @@
-package ru.destinyman.utils;
+package ru.destinyman.utils.file;
 
 import ru.destinyman.parsers.Entity;
 import ru.destinyman.parsers.MarkdownParser;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;

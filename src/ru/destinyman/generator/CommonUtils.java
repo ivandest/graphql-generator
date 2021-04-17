@@ -3,6 +3,7 @@ package ru.destinyman.generator;
 import ru.destinyman.parsers.Entity;
 
 import java.util.List;
+import java.util.Objects;
 
 public class CommonUtils {
 
@@ -69,7 +70,7 @@ public class CommonUtils {
         StringBuilder enumText = new StringBuilder();
 
         for (Entity entity : data){
-            if (!entity.getComment().equals("")){
+            if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
                 enumText.append(generateEnum(entity.getCode(), entity.getComment().split(",")));
             }
         }
@@ -81,11 +82,36 @@ public class CommonUtils {
         StringBuilder enumText = new StringBuilder();
 
         for (Entity entity : data){
-            if (!entity.getComment().equals("")){
+            if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
                 enumText.append(generateProtoEnum(entity.getCode(), entity.getComment().split(",")));
             }
         }
 
         return enumText.toString();
+    }
+
+    public static String makeSnakeCase(String textToConvert, Boolean firstLower) {
+        char[] parseString = textToConvert.toCharArray();
+        StringBuilder outputData = new StringBuilder();
+        boolean convertNext = true;
+        if (firstLower) {
+            parseString[0] = Character.toLowerCase(parseString[0]);
+            convertNext = false;
+        }
+        for (char textItem : parseString){
+            if (convertNext){
+                convertNext = false;
+                outputData.append(textItem);
+            } else if (Character.isUpperCase(textItem)) {
+                textItem = Character.toLowerCase(textItem);
+                convertNext = true;
+                outputData.append("_").append(textItem);
+            }
+            else{
+                textItem = Character.toLowerCase(textItem);
+                outputData.append(textItem);
+            }
+        }
+        return outputData.toString();
     }
 }
