@@ -1,5 +1,6 @@
 package ru.destinyman;
 
+import ru.destinyman.generator.CommonUtils;
 import ru.destinyman.generator.GraphqlGenerator;
 import ru.destinyman.generator.ProtoGenerator;
 import ru.destinyman.parsers.Entity;
@@ -43,7 +44,7 @@ public class Main {
                 GraphqlGenerator gg = new GraphqlGenerator();
                 ProtoGenerator pg = new ProtoGenerator();
 
-                String fileName = args[2] + "-service";
+                String fileName = CommonUtils.makeTitleCase(args[2], false) + "Service";
                 String graphqlFile = fileName.split("\\.")[0] + ".graphql";
                 String protoFile = fileName.split("\\.")[0] + ".proto";
                 MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
