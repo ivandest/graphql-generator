@@ -37,8 +37,6 @@ public class GraphqlGenerator implements IGenerator{
         outputData.append("\n");
         outputData.append(generateSaveInput(data, fileNameWithoutExtension));
 
-        System.out.println(outputData);
-
         return outputData.toString();
     }
 

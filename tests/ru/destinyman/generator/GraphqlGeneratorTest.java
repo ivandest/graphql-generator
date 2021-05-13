@@ -2,7 +2,7 @@ package ru.destinyman.generator;
 
 import org.junit.jupiter.api.Test;
 import ru.destinyman.parsers.Entity;
-import ru.destinyman.utils.MarkdownFileUtils;
+import ru.destinyman.utils.file.MarkdownFileUtils;
 
 import java.nio.file.Paths;
 import java.util.HashMap;

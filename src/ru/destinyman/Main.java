@@ -7,67 +7,73 @@ import ru.destinyman.parsers.Entity;
 import ru.destinyman.utils.database.PostgresConnection;
 import ru.destinyman.utils.database.PostgresDbObjects;
 import ru.destinyman.utils.file.MarkdownFileUtils;
+import ru.destinyman.utils.menu.EMenuActions;
+import ru.destinyman.utils.menu.MenuActions;
 
 import java.nio.file.Paths;
 import java.sql.Connection;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class Main {
 
+    static boolean checkHelpKey(String arg){
+       return arg.equals("-h") || arg.equals("--help");
+    }
+
     public static void main(String[] args) {
-        if (args.length == 0){
-            System.out.println("USAGE: graphql-generator.jar [options] file_path\n" +
-                    "OPTIONS:\n" +
-                    "   -q, --queries-only - generate only gql-queries\n" +
-                    "   -h, --help - get current usage info\n" +
-                    "   -a, --all - generate graphql, protofiles and gql-queries\n" +
-                    "   -qn, --no-query - generate graphql, protofiles WITHOUT gql-queries\n" +
-                    "   -f, --filters - with filters on each entity attribute\n" +
-                    "   -o, --order - with sort block\n" +
-                    "   --filter-types - with filter type on each entity attribute\n" +
-                    "   --order-types - with order type on each entity attribute\n" +
-                    "   --from-database - reverse engineering of specified database"
-            );
-            System.exit(0);
-        }
 
-        if (args[1].startsWith("-") || args[1].startsWith("--")){
-            if (args[1].startsWith("--from-database")) {
-                PostgresConnection pgConn = new PostgresConnection();
-                Connection connection = pgConn.create();
-
-                Map<String, List<Entity>> entities;
-                PostgresDbObjects postgresDbObjects = new PostgresDbObjects();
-
-                GraphqlGenerator gg = new GraphqlGenerator();
-                ProtoGenerator pg = new ProtoGenerator();
-
-                String fileName = CommonUtils.makeTitleCase(args[2], false) + "Service";
-                String graphqlFile = fileName.split("\\.")[0] + ".graphql";
-                String protoFile = fileName.split("\\.")[0] + ".proto";
-                MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
-
-                String tableName = args[2] + "." + args[3];
-                entities = postgresDbObjects.getTableDescription(connection, tableName);
-                markdownFileUtils.write(gg.generate(entities.get(tableName), fileName), Paths.get(graphqlFile));
-                markdownFileUtils.write(pg.generate(entities.get(tableName), fileName), Paths.get(protoFile));
+        switch (args.length) {
+            case 0: {
+                MenuActions.printHelp();
             }
+            case 1: {
+                if (args[0].startsWith("-") && !(checkHelpKey(args[0]))){
+                    throw new Error("Check that filepath was passed.");
+                }
+                if (checkHelpKey(args[0])){
+                    MenuActions.printHelp();
+                }
+                MenuActions.generateDefault(args[0]);
+                break;
+            }
+            default: {
+                if (args[args.length - 1].startsWith("-")){
+                    MenuActions.printHelp();
+                }
+                if (!args[0].startsWith("-")) {
+                    MenuActions.printHelp();
+                }
 
-        } else {
-            String pathToFile = args[0];
-            MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
-            List<Entity> data = markdownFileUtils.read(Paths.get(pathToFile));
-            String[] filePathParts = pathToFile.split("/");
-            String fileName = filePathParts[filePathParts.length - 1];
-            GraphqlGenerator gg = new GraphqlGenerator();
-            ProtoGenerator pg = new ProtoGenerator();
-            String graphqlFile = fileName.split("\\.")[0] + ".graphql";
-            String protoFile = fileName.split("\\.")[0] + ".proto";
-            markdownFileUtils.write(gg.generate(data, fileName), Paths.get(graphqlFile));
-            markdownFileUtils.write(pg.generate(data, fileName), Paths.get(protoFile));
+                ArrayList<EMenuActions> menuActions = MenuActions.getActionFromKeys(args);
 
+                MenuActions.executeActions(menuActions, args);
+
+                if (args[1].startsWith("-")){
+                    if (args[1].startsWith("--from-database")) {
+                        PostgresConnection pgConn = new PostgresConnection();
+                        Connection connection = pgConn.create();
+
+                        Map<String, List<Entity>> entities;
+                        PostgresDbObjects postgresDbObjects = new PostgresDbObjects();
+
+                        GraphqlGenerator gg = new GraphqlGenerator();
+                        ProtoGenerator pg = new ProtoGenerator();
+
+                        String fileName = CommonUtils.makeTitleCase(args[2], false) + "Service";
+                        String graphqlFile = fileName.split("\\.")[0] + ".graphql";
+                        String protoFile = fileName.split("\\.")[0] + ".proto";
+                        MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
+
+                        String tableName = args[2] + "." + args[3];
+                        entities = postgresDbObjects.getTableDescription(connection, tableName);
+                        markdownFileUtils.write(gg.generate(entities.get(tableName), fileName), Paths.get(graphqlFile));
+                        markdownFileUtils.write(pg.generate(entities.get(tableName), fileName), Paths.get(protoFile));
+                    }
+                }
+                break;
+            }
         }
     }
 }

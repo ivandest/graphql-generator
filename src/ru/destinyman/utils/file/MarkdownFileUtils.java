@@ -34,6 +34,7 @@ public class MarkdownFileUtils implements IFileUtils {
             }
         } catch (IOException e) {
             e.printStackTrace();
+            System.exit(-1);
         }
 
         if (index > 0){
