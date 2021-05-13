@@ -52,31 +52,39 @@ public class MenuActions {
                 case "-q":
                 case "--queries-only": {
                     output.add(EMenuActions.QUERIES_ONLY);
+                    break;
                 }
                 case "-a":
                 case "--all": {
                     output.add(EMenuActions.ALL);
+                    break;
                 }
                 case "-qn":
                 case "--no-query":{
                     output.add(EMenuActions.NO_QUERY);
+                    break;
                 }
                 case "-f":
                 case "--filters": {
                     output.add(EMenuActions.FILTERS);
+                    break;
                 }
                 case "-o":
                 case "--order":{
                     output.add(EMenuActions.ORDER);
+                    break;
                 }
                 case "--filter-types": {
                     output.add(EMenuActions.FILTER_TYPES);
+                    break;
                 }
                 case "--order-types":{
                     output.add(EMenuActions.ORDER_TYPES);
+                    break;
                 }
                 case "--from-database": {
                     output.add(EMenuActions.DATABASE);
+                    break;
                 }
             }
         });
