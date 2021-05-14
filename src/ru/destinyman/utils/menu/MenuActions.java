@@ -1,8 +1,10 @@
 package ru.destinyman.utils.menu;
 
+import ru.destinyman.generator.CommonUtils;
 import ru.destinyman.generator.GraphqlGenerator;
 import ru.destinyman.generator.ProtoGenerator;
 import ru.destinyman.parsers.Entity;
+import ru.destinyman.utils.database.CommonDbUtils;
 import ru.destinyman.utils.file.MarkdownFileUtils;
 
 import java.nio.file.Paths;
@@ -12,15 +14,13 @@ import java.util.List;
 
 public class MenuActions {
 
-
-
     static public void printHelp(){
         System.out.println("USAGE: graphql-generator.jar [options] file_path\n" +
                 "OPTIONS:\n" +
-                "   -q, --queries-only - generate only gql-queries\n" +
+                "   -q, --queries-only - generate only gql-queries and mutations\n" +
                 "   -h, --help - get current usage info\n" +
-                "   -a, --all - generate graphql, protofiles and gql-queries\n" +
-                "   -qn, --no-query - generate graphql, protofiles WITHOUT gql-queries\n" +
+                "   -a, --all - generate graphql, proto files, gql-queries and mutations\n" +
+                "   -qn, --no-query - generate graphql, proto files WITHOUT gql-queries and mutations\n" +
                 "   -f, --filters - with filters on each entity attribute\n" +
                 "   -o, --order - with sort block\n" +
                 "   --filter-types - with filter type on each entity attribute\n" +
@@ -30,33 +30,30 @@ public class MenuActions {
         System.exit(0);
     }
 
-    static public void generateDefault(String pathToFile){
-        MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
-        List<Entity> data = markdownFileUtils.read(Paths.get(pathToFile));
-        String[] filePathParts = pathToFile.split("/");
-        String fileName = filePathParts[filePathParts.length - 1];
-        GraphqlGenerator gg = new GraphqlGenerator();
-        ProtoGenerator pg = new ProtoGenerator();
-        String graphqlFile = fileName.split("\\.")[0] + ".graphql";
-        String protoFile = fileName.split("\\.")[0] + ".proto";
-        markdownFileUtils.write(gg.generate(data, fileName), Paths.get(graphqlFile));
-        markdownFileUtils.write(pg.generate(data, fileName), Paths.get(protoFile));
-    }
-
     static public ArrayList<EMenuActions> getActionFromKeys(String[] args){
         List<String> result = Arrays.asList(args);
 
         ArrayList<EMenuActions> output = new ArrayList<>();
+
+        if (args.length == 1 && !args[0].startsWith("-")){
+            output.add(EMenuActions.ALL);
+            return output;
+        }
+        if (args.length == 3 && args[0].equals("--from-database") && !args[1].startsWith("-") && !args[2].startsWith("-")) {
+            output.add(EMenuActions.ALL);
+            return output;
+        }
+
         result.forEach(arg -> {
             switch (arg) {
+                case "-h":
+                case "--help": {
+                    output.add(EMenuActions.HELP);
+                    break;
+                }
                 case "-q":
                 case "--queries-only": {
                     output.add(EMenuActions.QUERIES_ONLY);
-                    break;
-                }
-                case "-a":
-                case "--all": {
-                    output.add(EMenuActions.ALL);
                     break;
                 }
                 case "-qn":
@@ -86,6 +83,11 @@ public class MenuActions {
                     output.add(EMenuActions.DATABASE);
                     break;
                 }
+                case "-a":
+                case "--all": {
+                    output.add(EMenuActions.ALL);
+                    break;
+                }
             }
         });
         return output;
@@ -93,6 +95,57 @@ public class MenuActions {
 
     public static void executeActions(ArrayList<EMenuActions> menuActions, String[] args) {
         checkPossibility(menuActions);
+
+        String fileName = menuActions.contains(EMenuActions.DATABASE) ?
+                CommonUtils.makeTitleCase(args[2], false) + "Service"
+        :
+                CommonUtils.getFileName(args);
+
+        String graphqlFile = fileName.split("\\.")[0] + ".graphql";
+        String protoFile = fileName.split("\\.")[0] + ".proto";
+
+        MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
+
+        List<Entity> data = menuActions.contains(EMenuActions.DATABASE) ?
+                CommonDbUtils.getDataFromDb(args[2] + "." + args[3])
+                :
+                markdownFileUtils.read(Paths.get(args[args.length - 1]));
+        StringBuilder gqlOutput = new StringBuilder("schema {\nquery: Query\nmutation: Mutation\n}\n");
+        StringBuilder protoOutput = new StringBuilder("syntax = \"proto3\";\n\npackage org.service;\n");
+
+        GraphqlGenerator gg = new GraphqlGenerator();
+        ProtoGenerator pg = new ProtoGenerator();
+
+        String entityName = menuActions.contains(EMenuActions.DATABASE) ? fileName : CommonUtils.getFileNameWithoutExtension(args[args.length - 1]);
+
+        if (menuActions.contains(EMenuActions.QUERIES_ONLY)){
+            gqlOutput.append(gg.generateQuery(entityName));
+            gqlOutput.append(gg.generateMutation(entityName));
+            gqlOutput.append(gg.generateListRequest(entityName));
+            gqlOutput.append(gg.generateResponse(entityName));
+            gqlOutput.append(gg.generateSaveInput(data, entityName));
+            protoOutput.append(pg.generateService(entityName));
+            protoOutput.append(pg.generateListRequest(entityName));
+            protoOutput.append(pg.generateListRequest(entityName));
+            protoOutput.append(pg.generateSaveRequest(data, entityName));
+            protoOutput.append(pg.generateSaveResponse(entityName));
+            protoOutput.append(pg.generateRemoveRequest(entityName));
+            protoOutput.append(pg.generateRemoveRequest(entityName));
+        }
+        if (menuActions.contains(EMenuActions.ALL)){
+            gqlOutput.append(gg.generate(data, entityName));
+            protoOutput.append(pg.generate(data, entityName));
+        }
+        if (menuActions.contains(EMenuActions.HELP)){
+            printHelp();
+        }
+        if (menuActions.size() == 1 && menuActions.contains(EMenuActions.DATABASE)){
+            gqlOutput.append(gg.generate(data, entityName));
+            protoOutput.append(pg.generate(data, entityName));
+        }
+
+        markdownFileUtils.write(gqlOutput.toString(), Paths.get(graphqlFile));
+        markdownFileUtils.write(protoOutput.toString(), Paths.get(protoFile));
     }
 
     static List<EMenuActions> notPossible = List.of(EMenuActions.NO_QUERY, EMenuActions.QUERIES_ONLY);

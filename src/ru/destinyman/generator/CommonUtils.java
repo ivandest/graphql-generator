@@ -1,6 +1,7 @@
 package ru.destinyman.generator;
 
 import ru.destinyman.parsers.Entity;
+import ru.destinyman.utils.file.MarkdownFileUtils;
 
 import java.util.List;
 import java.util.Objects;
@@ -114,4 +115,15 @@ public class CommonUtils {
         }
         return outputData.toString();
     }
+
+    public static String getFileNameWithoutExtension(String fileName) {
+        return fileName.indexOf('.') != -1 ? fileName.substring(0, fileName.indexOf('.')) : fileName;
+    }
+
+    public static String getFileName(String[] args) {
+        String pathToFile = args[args.length - 1];
+        String[] filePathParts = pathToFile.split("/");
+        return filePathParts[filePathParts.length - 1];
+    }
+
 }

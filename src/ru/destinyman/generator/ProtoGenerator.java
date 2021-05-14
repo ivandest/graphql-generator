@@ -6,7 +6,7 @@ import java.util.List;
 public class ProtoGenerator implements IGenerator {
     @Override
     public String generate(List<Entity> data, String fileName) {
-        String fileNameWithoutExtension = fileName.indexOf('.') != -1 ? fileName.substring(0, fileName.indexOf('.')) : fileName;
+        String fileNameWithoutExtension = CommonUtils.getFileNameWithoutExtension(fileName);
         String[] orderDirection = {"ASC", "DESC"};
         return "syntax = \"proto3\";\n" +
                 "\n" +

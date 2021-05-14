@@ -10,34 +10,32 @@ public class GraphqlGenerator implements IGenerator{
     @Override
     public String generate(List<Entity> data, String fileName) {
 
-        String fileNameWithoutExtension = fileName.indexOf('.') != -1 ? fileName.substring(0, fileName.indexOf('.')) : fileName;
+        String fileNameWithoutExtension = CommonUtils.getFileNameWithoutExtension(fileName);
 
-        StringBuilder outputData = new StringBuilder("schema {\nquery: Query\nmutation: Mutation\n}\n");
-
-        outputData.append(generateQuery(fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateMutation(fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateEntityType(data, fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateListRequest(fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateResponse(fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(generateOrderInput(fileNameWithoutExtension));
-        outputData.append("\n");
         String[] orderDirection = {"ASC", "DESC"};
-        outputData.append(CommonUtils.generateEnum("order_direction", orderDirection));
-        outputData.append("\n");
-        outputData.append(CommonUtils.generateEnum(fileNameWithoutExtension + "ListOrderFields", CommonUtils.getFieldCodes(data)));
-        outputData.append("\n");
-        outputData.append(generateFilterInput(data, fileNameWithoutExtension));
-        outputData.append("\n");
-        outputData.append(CommonUtils.generateEnumFromComment(data));
-        outputData.append("\n");
-        outputData.append(generateSaveInput(data, fileNameWithoutExtension));
 
-        return outputData.toString();
+        return "schema {\nquery: Query\nmutation: Mutation\n}\n" +
+                generateQuery(fileNameWithoutExtension) +
+                "\n" +
+                generateMutation(fileNameWithoutExtension) +
+                "\n" +
+                generateEntityType(data, fileNameWithoutExtension) +
+                "\n" +
+                generateListRequest(fileNameWithoutExtension) +
+                "\n" +
+                generateResponse(fileNameWithoutExtension) +
+                "\n" +
+                generateOrderInput(fileNameWithoutExtension) +
+                "\n" +
+                CommonUtils.generateEnum("order_direction", orderDirection) +
+                "\n" +
+                CommonUtils.generateEnum(fileNameWithoutExtension + "ListOrderFields", CommonUtils.getFieldCodes(data)) +
+                "\n" +
+                generateFilterInput(data, fileNameWithoutExtension) +
+                "\n" +
+                CommonUtils.generateEnumFromComment(data) +
+                "\n" +
+                generateSaveInput(data, fileNameWithoutExtension);
     }
 
     public String generateQuery(String entityName){
