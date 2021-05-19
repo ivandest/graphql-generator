@@ -14,8 +14,7 @@ public class GraphqlGenerator implements IGenerator{
 
         String[] orderDirection = {"ASC", "DESC"};
 
-        return "schema {\nquery: Query\nmutation: Mutation\n}\n" +
-                generateQuery(fileNameWithoutExtension) +
+        return  generateQuery(fileNameWithoutExtension) +
                 "\n" +
                 generateMutation(fileNameWithoutExtension) +
                 "\n" +
@@ -61,6 +60,15 @@ public class GraphqlGenerator implements IGenerator{
         generateFieldsWithTypesForEntity(data, entityType);
         entityType.append("}");
         return entityType.toString();
+    }
+
+    @Override
+    public String generateOnlyQueries(List<Entity> data, String entityName) {
+        return generateQuery(entityName) + "\n" +
+        generateMutation(entityName) + "\n" +
+        generateListRequest(entityName) + "\n" +
+        generateResponse(entityName) + "\n" +
+        generateSaveInput(data, entityName);
     }
 
     private void generateFieldsWithTypesForEntity(List<Entity> data, StringBuilder entityType) {

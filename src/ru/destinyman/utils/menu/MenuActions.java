@@ -4,6 +4,7 @@ import ru.destinyman.generator.CommonUtils;
 import ru.destinyman.generator.GraphqlGenerator;
 import ru.destinyman.generator.ProtoGenerator;
 import ru.destinyman.parsers.Entity;
+import ru.destinyman.utils.ErrorText;
 import ru.destinyman.utils.database.CommonDbUtils;
 import ru.destinyman.utils.file.MarkdownFileUtils;
 
@@ -25,7 +26,7 @@ public class MenuActions {
                 "   -o, --order - with sort block\n" +
                 "   --filter-types - with filter type on each entity attribute\n" +
                 "   --order-types - with order type on each entity attribute\n" +
-                "   --from-database - reverse engineering of specified database"
+                "   --from-database host:port:database:login:password [schema | table] - reverse engineering of specified database"
         );
         System.exit(0);
     }
@@ -107,7 +108,7 @@ public class MenuActions {
         MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
 
         List<Entity> data = menuActions.contains(EMenuActions.DATABASE) ?
-                CommonDbUtils.getDataFromDb(args[2] + "." + args[3])
+                CommonDbUtils.getDataFromDb(args[args.length - 3], args[args.length - 2] + "." + args[args.length - 1])
                 :
                 markdownFileUtils.read(Paths.get(args[args.length - 1]));
         StringBuilder gqlOutput = new StringBuilder("schema {\nquery: Query\nmutation: Mutation\n}\n");
@@ -119,18 +120,8 @@ public class MenuActions {
         String entityName = menuActions.contains(EMenuActions.DATABASE) ? fileName : CommonUtils.getFileNameWithoutExtension(args[args.length - 1]);
 
         if (menuActions.contains(EMenuActions.QUERIES_ONLY)){
-            gqlOutput.append(gg.generateQuery(entityName));
-            gqlOutput.append(gg.generateMutation(entityName));
-            gqlOutput.append(gg.generateListRequest(entityName));
-            gqlOutput.append(gg.generateResponse(entityName));
-            gqlOutput.append(gg.generateSaveInput(data, entityName));
-            protoOutput.append(pg.generateService(entityName));
-            protoOutput.append(pg.generateListRequest(entityName));
-            protoOutput.append(pg.generateListRequest(entityName));
-            protoOutput.append(pg.generateSaveRequest(data, entityName));
-            protoOutput.append(pg.generateSaveResponse(entityName));
-            protoOutput.append(pg.generateRemoveRequest(entityName));
-            protoOutput.append(pg.generateRemoveRequest(entityName));
+            gqlOutput.append(gg.generateOnlyQueries(data, entityName));
+            protoOutput.append(pg.generateOnlyQueries(data, entityName));
         }
         if (menuActions.contains(EMenuActions.ALL)){
             gqlOutput.append(gg.generate(data, entityName));
@@ -143,6 +134,10 @@ public class MenuActions {
             gqlOutput.append(gg.generate(data, entityName));
             protoOutput.append(pg.generate(data, entityName));
         }
+        if (menuActions.contains(EMenuActions.NO_QUERY)) {
+            gqlOutput.append(gg.generateEntityType(data, entityName));
+            protoOutput.append(pg.generateEntityType(data, entityName));
+        }
 
         markdownFileUtils.write(gqlOutput.toString(), Paths.get(graphqlFile));
         markdownFileUtils.write(protoOutput.toString(), Paths.get(protoFile));
@@ -154,7 +149,7 @@ public class MenuActions {
             printHelp();
         }
         if (menuActions.containsAll(notPossible)){
-            throw new Error("NO_QUERIES conflict with QUERIES_ONLY");
+            throw new Error(ErrorText.QUERIES_KEY_CONFLICT.getMessage());
         }
     }
 }

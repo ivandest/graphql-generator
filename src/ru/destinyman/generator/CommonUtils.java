@@ -1,8 +1,6 @@
 package ru.destinyman.generator;
 
 import ru.destinyman.parsers.Entity;
-import ru.destinyman.utils.file.MarkdownFileUtils;
-
 import java.util.List;
 import java.util.Objects;
 

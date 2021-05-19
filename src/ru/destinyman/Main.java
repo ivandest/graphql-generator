@@ -1,5 +1,6 @@
 package ru.destinyman;
 
+import ru.destinyman.utils.ErrorText;
 import ru.destinyman.utils.menu.EMenuActions;
 import ru.destinyman.utils.menu.MenuActions;
 
@@ -26,7 +27,7 @@ public class Main {
             }
             case 1: {
                 if (args[0].startsWith("-") && !(checkKey(args[0], "-h", "--help"))){
-                    throw new Error("Check that filepath was passed.");
+                    throw new Error(ErrorText.NO_FILEPATH.getMessage());
                 }
                 if (checkKey(args[0], "-h", "--help")){
                     MenuActions.executeActions(menuActions, args);

@@ -38,8 +38,8 @@ public class PostgresDbObjects implements IDbObjects {
             result.put(objectName, entities);
             statement.close();
 
-        } catch (SQLException throwables) {
-            throwables.printStackTrace();
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
         }
         return result;
     }

@@ -8,10 +8,7 @@ public class ProtoGenerator implements IGenerator {
     public String generate(List<Entity> data, String fileName) {
         String fileNameWithoutExtension = CommonUtils.getFileNameWithoutExtension(fileName);
         String[] orderDirection = {"ASC", "DESC"};
-        return "syntax = \"proto3\";\n" +
-                "\n" +
-                "package org.service;" + "\n" +
-                generateService(fileNameWithoutExtension) +
+        return  generateService(fileNameWithoutExtension) +
                 "\n" +
                 generateListRequest(fileNameWithoutExtension) +
                 "\n" +
@@ -44,6 +41,17 @@ public class ProtoGenerator implements IGenerator {
         entityType.append(CommonUtils.makeTitleCase(entityName, false)).append(" {\n");
         generateFieldsWithTypesForEntity(data, entityType);
         return entityType.toString();
+    }
+
+    @Override
+    public String generateOnlyQueries(List<Entity> data, String entityName) {
+        return generateService(entityName) + "\n" +
+        generateListRequest(entityName) + "\n" +
+        generateListRequest(entityName) + "\n" +
+        generateSaveRequest(data, entityName) + "\n" +
+        generateSaveResponse(entityName) + "\n" +
+        generateRemoveRequest(entityName) + "\n" +
+        generateRemoveRequest(entityName);
     }
 
     private void generateFieldsWithTypesForEntity(List<Entity> data, StringBuilder entityType){
