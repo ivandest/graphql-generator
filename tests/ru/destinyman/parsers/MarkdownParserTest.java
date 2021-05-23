@@ -17,7 +17,7 @@ class MarkdownParserTest {
         etalon.setCode("id");
         etalon.setCaption("Идентификатор");
         etalon.setDataType("id");
-        etalon.setIsNecessarily("(plus)");
+        etalon.setIsNullable("(plus)");
         etalon.setReference("");
         etalon.setComment("");
 
