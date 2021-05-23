@@ -143,6 +143,7 @@ public class ProtoGenerator implements IGenerator {
         switch (dataType.trim()){
             case "id":
             case "varchar":
+            case "uuid":
                 return "string";
             case "timestamp":
             case "timestamptz": {

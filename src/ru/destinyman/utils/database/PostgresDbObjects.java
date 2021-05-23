@@ -13,8 +13,7 @@ public class PostgresDbObjects implements IDbObjects {
     public Map<String, List<Entity>> getTableDescription(Connection connection, String objectName) {
         Map<String, List<Entity>> result = new HashMap<>();
         try {
-            PostgresConnection postgresConnection = new PostgresConnection();
-            PreparedStatement statement = postgresConnection.create().prepareStatement("select table_schema, " +
+            PreparedStatement statement = connection.prepareStatement("select table_schema, " +
                     "                     table_name, " +
                     "                     column_name, " +
                     "                     udt_name, " +

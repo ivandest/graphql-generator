@@ -98,12 +98,12 @@ public class MenuActions {
         checkPossibility(menuActions);
 
         String fileName = menuActions.contains(EMenuActions.DATABASE) ?
-                CommonUtils.makeTitleCase(args[2], false) + "Service"
+                CommonUtils.makeTitleCase(args[2], false)
         :
                 CommonUtils.getFileName(args);
 
-        String graphqlFile = fileName.split("\\.")[0] + ".graphql";
-        String protoFile = fileName.split("\\.")[0] + ".proto";
+        String graphqlFile = fileName.split("\\.")[0] + "Service.graphql";
+        String protoFile = fileName.split("\\.")[0] + "Service.proto";
 
         MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
 

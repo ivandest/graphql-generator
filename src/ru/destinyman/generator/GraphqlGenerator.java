@@ -139,7 +139,8 @@ public class GraphqlGenerator implements IGenerator{
             dataType = dataType.substring(0, dataType.indexOf("("));
 
         switch (dataType.trim()){
-            case "id": {
+            case "id":
+            case "uuid": {
                 if (reference.equals(""))
                     return "ID";
                 return makeLinkedEntity(reference);
