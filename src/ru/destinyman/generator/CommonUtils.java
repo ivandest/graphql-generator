@@ -34,7 +34,7 @@ public class CommonUtils {
 
 
     public static String generateEnum(String enumName, String[] fields){
-        StringBuilder outputData = new StringBuilder("enum E" + makeTitleCase(enumName, false) + " {\n");
+        StringBuilder outputData = new StringBuilder("enum " + makeEnumName(enumName) + " {\n");
         for (String field : fields){
             outputData.append(field.toUpperCase().trim()).append("\n");
         }
@@ -44,7 +44,7 @@ public class CommonUtils {
     }
 
     public static String generateProtoEnum(String enumName, String[] fields){
-        StringBuilder outputData = new StringBuilder("enum E" + makeTitleCase(enumName, false) + " {\n");
+        StringBuilder outputData = new StringBuilder("enum " + makeEnumName(enumName) + " {\n");
         for (int i = 0; i < fields.length; i++){
             outputData.append(fields[i].toUpperCase().trim()).append(" = ").append(i).append(";\n");
         }
@@ -70,7 +70,7 @@ public class CommonUtils {
 
         for (Entity entity : data){
             if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
-                enumText.append(generateEnum(entity.getCode(), entity.getComment().split(",")));
+                enumText.append(generateEnum(entity.getCode(), entity.getComment().split(","))).append("\n");
             }
         }
 
@@ -82,7 +82,7 @@ public class CommonUtils {
 
         for (Entity entity : data){
             if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
-                enumText.append(generateProtoEnum(entity.getCode(), entity.getComment().split(",")));
+                enumText.append(generateProtoEnum(entity.getCode(), entity.getComment().split(","))).append("\n");
             }
         }
 

@@ -26,7 +26,7 @@ public class MenuActions {
                 "   -o, --order - with sort block\n" +
                 "   --filter-types - with filter type on each entity attribute\n" +
                 "   --order-types - with order type on each entity attribute\n" +
-                "   --from-database host:port:database:login:password [schema | table] - reverse engineering of specified database"
+                "   --from-database host:port:database:login:password [schema | schema table] - reverse engineering of specified database"
         );
         System.exit(0);
     }
