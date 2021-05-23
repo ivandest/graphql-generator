@@ -75,7 +75,11 @@ public class GraphqlGenerator implements IGenerator{
         for (Entity record : data){
             entityType.append("\"").append(record.getCaption()).append("\"\n");
             entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
-            entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference())).append("\n");
+            entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference()));
+            if (record.getIsNullable().equals("NO")) {
+                entityType.append("!");
+            }
+            entityType.append("\n");
         }
     }
 
@@ -203,5 +207,4 @@ public class GraphqlGenerator implements IGenerator{
         entityType.append("}");
         return entityType.toString();
     }
-
 }

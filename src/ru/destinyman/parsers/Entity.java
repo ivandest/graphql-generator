@@ -5,7 +5,7 @@ public class Entity {
     String code;
     String caption;
     String dataType;
-    String isNecessarily;
+    String isNullable;
     String reference;
     String comment;
 
@@ -13,11 +13,11 @@ public class Entity {
     public Entity() {
     }
 
-    public Entity(String code, String caption, String dataType, String isNecessarily, String reference, String comment) {
+    public Entity(String code, String caption, String dataType, String isNullable, String reference, String comment) {
         this.code = code;
         this.caption = caption;
         this.dataType = dataType;
-        this.isNecessarily = isNecessarily;
+        this.isNullable = isNullable;
         this.reference = reference;
         this.comment = comment;
     }
@@ -46,12 +46,12 @@ public class Entity {
         this.dataType = dataType;
     }
 
-    public String getIsNecessarily() {
-        return isNecessarily;
+    public String getIsNullable() {
+        return isNullable;
     }
 
-    public void setIsNecessarily(String isNecessarily) {
-        this.isNecessarily = isNecessarily;
+    public void setIsNullable(String isNullable) {
+        this.isNullable = isNullable;
     }
 
     public String getReference() {

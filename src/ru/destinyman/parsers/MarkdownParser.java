@@ -8,6 +8,9 @@ public class MarkdownParser implements IParser {
         String[] completeFields = new String[6];
         for (int i = 0; i < fields.length; i++) {
             fields[i] = fields[i].trim();
+            if (i == 3) {
+                fields[i] = convertToBooleanString(fields[i]);
+            }
             completeFields[i] = fields[i];
         }
 
@@ -19,5 +22,10 @@ public class MarkdownParser implements IParser {
         }
 
         return new Entity(completeFields[0], completeFields[1], completeFields[2], completeFields[3], completeFields[4], completeFields[5]);
+    }
+
+    private String convertToBooleanString(String field) {
+        if (field.contains("plus")) return "NO";
+        return "YES";
     }
 }
