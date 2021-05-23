@@ -13,9 +13,7 @@ public class PostgresDbObjects implements IDbObjects {
     public Map<String, List<Entity>> getTableDescription(Connection connection, String objectName) {
         Map<String, List<Entity>> result = new HashMap<>();
         try {
-            PreparedStatement statement = connection.prepareStatement("select table_schema, " +
-                    "                     table_name, " +
-                    "                     column_name, " +
+            PreparedStatement statement = connection.prepareStatement("select column_name, " +
                     "                     udt_name, " +
                     "                     is_nullable, " +
                     "                     column_default " +
@@ -31,13 +29,18 @@ public class PostgresDbObjects implements IDbObjects {
 
             ArrayList<Entity> entities = new ArrayList<>();
             while (rs.next()){
-                String dataType = rs.getString(4);
-                String comment = rs.getString(6);
+                String column = rs.getString(1);
+                String dataType = rs.getString(2);
+                String comment = rs.getString(4);
+                String reference = null;
                 if (dataType.contains("enum")) {
                     comment = getEnumDescription(connection, dataType);
                     dataType = "enum";
                 }
-                Entity entity = new Entity(rs.getString(3), "comment", dataType, rs.getString(5), "link", comment);
+                if (dataType.contains("id")) {
+                    reference = getReference(connection, schemaName, tableName, column);
+                }
+                Entity entity = new Entity(column, "comment", dataType, rs.getString(3), reference, comment);
                 entities.add(entity);
             }
             result.put(objectName, entities);
@@ -47,6 +50,38 @@ public class PostgresDbObjects implements IDbObjects {
             throwable.printStackTrace();
         }
         return result;
+    }
+
+    private String getReference(Connection connection, String schemaName, String tableName, String column) {
+        try {
+            PreparedStatement statement = connection.prepareStatement("select rel_tco.table_name || '.id'\n" +
+                    "from information_schema.table_constraints tco\n" +
+                    "join information_schema.key_column_usage kcu\n" +
+                    "          on tco.constraint_schema = kcu.constraint_schema\n" +
+                    "          and tco.constraint_name = kcu.constraint_name\n" +
+                    "join information_schema.referential_constraints rco\n" +
+                    "          on tco.constraint_schema = rco.constraint_schema\n" +
+                    "          and tco.constraint_name = rco.constraint_name\n" +
+                    "join information_schema.table_constraints rel_tco\n" +
+                    "          on rco.unique_constraint_schema = rel_tco.constraint_schema\n" +
+                    "          and rco.unique_constraint_name = rel_tco.constraint_name\n" +
+                    "where tco.constraint_type = 'FOREIGN KEY' and kcu.table_schema = ? and kcu.table_name = ? and kcu.column_name = ?;");
+
+            statement.setString(1, schemaName);
+            statement.setString(2, tableName);
+            statement.setString(3, column);
+
+            ResultSet rs =  statement.executeQuery();
+            StringBuilder referenceData = new StringBuilder();
+            while (rs.next()) {
+                referenceData.append(rs.getString(1));
+            }
+            return referenceData.toString();
+
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+        return null;
     }
 
     private String getEnumDescription(Connection connection, String dataType) {
