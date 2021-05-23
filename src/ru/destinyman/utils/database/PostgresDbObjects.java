@@ -31,7 +31,13 @@ public class PostgresDbObjects implements IDbObjects {
 
             ArrayList<Entity> entities = new ArrayList<>();
             while (rs.next()){
-                Entity entity = new Entity(rs.getString(3), "comment", rs.getString(4), rs.getString(5), "link", rs.getString(6));
+                String dataType = rs.getString(4);
+                String comment = rs.getString(6);
+                if (dataType.contains("enum")) {
+                    comment = getEnumDescription(connection, dataType);
+                    dataType = "enum";
+                }
+                Entity entity = new Entity(rs.getString(3), "comment", dataType, rs.getString(5), "link", comment);
                 entities.add(entity);
             }
             result.put(objectName, entities);
@@ -41,5 +47,26 @@ public class PostgresDbObjects implements IDbObjects {
             throwable.printStackTrace();
         }
         return result;
+    }
+
+    private String getEnumDescription(Connection connection, String dataType) {
+        try {
+            PreparedStatement statement = connection.prepareStatement("select e.enumlabel from pg_catalog.pg_enum e\n" +
+                    "join pg_catalog.pg_type t on t.oid = e.enumtypid\n" +
+                    "where t.typname = ?\n" +
+                    "order by e.enumsortorder;");
+
+            statement.setString(1, dataType);
+
+            ResultSet rs =  statement.executeQuery();
+            StringBuilder enumData = new StringBuilder();
+            while (rs.next()) {
+                enumData.append(rs.getString(1)).append(",");
+            }
+            return enumData.toString();
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+        }
+        return null;
     }
 }

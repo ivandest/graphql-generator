@@ -144,6 +144,7 @@ public class ProtoGenerator implements IGenerator {
             case "id":
             case "varchar":
             case "uuid":
+            case "jsonb":
                 return "string";
             case "timestamp":
             case "timestamptz": {

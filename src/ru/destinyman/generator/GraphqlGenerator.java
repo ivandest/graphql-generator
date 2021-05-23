@@ -145,7 +145,9 @@ public class GraphqlGenerator implements IGenerator{
                     return "ID";
                 return makeLinkedEntity(reference);
             }
-            case "varchar": return "String";
+            case "varchar":
+            case "jsonb":
+                return "String";
             case "timestamp":
             case "timestamptz": {
                 MarkdownFileUtils mfu = new MarkdownFileUtils();
@@ -165,8 +167,12 @@ public class GraphqlGenerator implements IGenerator{
             dataType = dataType.substring(0, dataType.indexOf("("));
 
         switch (dataType.trim()){
-            case "id": return "ID";
-            case "varchar": return "String";
+            case "id":
+            case "uuid":
+                return "ID";
+            case "varchar":
+            case "jsonb":
+                return "String";
             case "timestamp":
             case "timestamptz":
                 return "DateTime";
