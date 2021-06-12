@@ -54,18 +54,19 @@ public class PostgresDbObjects implements IDbObjects {
 
     private String getReference(Connection connection, String schemaName, String tableName, String column) {
         try {
-            PreparedStatement statement = connection.prepareStatement("select rel_tco.table_name || '.id'\n" +
-                    "from information_schema.table_constraints tco\n" +
-                    "join information_schema.key_column_usage kcu\n" +
-                    "          on tco.constraint_schema = kcu.constraint_schema\n" +
-                    "          and tco.constraint_name = kcu.constraint_name\n" +
-                    "join information_schema.referential_constraints rco\n" +
-                    "          on tco.constraint_schema = rco.constraint_schema\n" +
-                    "          and tco.constraint_name = rco.constraint_name\n" +
-                    "join information_schema.table_constraints rel_tco\n" +
-                    "          on rco.unique_constraint_schema = rel_tco.constraint_schema\n" +
-                    "          and rco.unique_constraint_name = rel_tco.constraint_name\n" +
-                    "where tco.constraint_type = 'FOREIGN KEY' and kcu.table_schema = ? and kcu.table_name = ? and kcu.column_name = ?;");
+            PreparedStatement statement = connection.prepareStatement("""
+                    select rel_tco.table_name || '.id'
+                    from information_schema.table_constraints tco
+                    join information_schema.key_column_usage kcu
+                              on tco.constraint_schema = kcu.constraint_schema
+                              and tco.constraint_name = kcu.constraint_name
+                    join information_schema.referential_constraints rco
+                              on tco.constraint_schema = rco.constraint_schema
+                              and tco.constraint_name = rco.constraint_name
+                    join information_schema.table_constraints rel_tco
+                              on rco.unique_constraint_schema = rel_tco.constraint_schema
+                              and rco.unique_constraint_name = rel_tco.constraint_name
+                    where tco.constraint_type = 'FOREIGN KEY' and kcu.table_schema = ? and kcu.table_name = ? and kcu.column_name = ?;""");
 
             statement.setString(1, schemaName);
             statement.setString(2, tableName);
@@ -86,10 +87,11 @@ public class PostgresDbObjects implements IDbObjects {
 
     private String getEnumDescription(Connection connection, String dataType) {
         try {
-            PreparedStatement statement = connection.prepareStatement("select e.enumlabel from pg_catalog.pg_enum e\n" +
-                    "join pg_catalog.pg_type t on t.oid = e.enumtypid\n" +
-                    "where t.typname = ?\n" +
-                    "order by e.enumsortorder;");
+            PreparedStatement statement = connection.prepareStatement("""
+                    select e.enumlabel from pg_catalog.pg_enum e
+                    join pg_catalog.pg_type t on t.oid = e.enumtypid
+                    where t.typname = ?
+                    order by e.enumsortorder;""");
 
             statement.setString(1, dataType);
 

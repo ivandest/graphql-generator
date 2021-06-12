@@ -170,20 +170,14 @@ public class GraphqlGenerator implements IGenerator{
         if (dataType.contains("("))
             dataType = dataType.substring(0, dataType.indexOf("("));
 
-        switch (dataType.trim()){
-            case "id":
-            case "uuid":
-                return "ID";
-            case "varchar":
-            case "jsonb":
-                return "String";
-            case "timestamp":
-            case "timestamptz":
-                return "DateTime";
-            case "enum": return CommonUtils.makeEnumName(code);
-        }
+        return switch (dataType.trim()) {
+            case "id", "uuid" -> "ID";
+            case "varchar", "jsonb" -> "String";
+            case "timestamp", "timestamptz" -> "DateTime";
+            case "enum" -> CommonUtils.makeEnumName(code);
+            default -> converted;
+        };
 
-        return converted;
     }
 
     private String makeLinkedEntity(String entityName){

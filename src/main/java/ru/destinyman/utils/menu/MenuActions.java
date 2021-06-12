@@ -16,17 +16,18 @@ import java.util.List;
 public class MenuActions {
 
     static public void printHelp(){
-        System.out.println("USAGE: graphql-generator.jar [options] file_path\n" +
-                "OPTIONS:\n" +
-                "   -q, --queries-only - generate only gql-queries and mutations\n" +
-                "   -h, --help - get current usage info\n" +
-                "   -a, --all - generate graphql, proto files, gql-queries and mutations\n" +
-                "   -qn, --no-query - generate graphql, proto files WITHOUT gql-queries and mutations\n" +
-                "   -f, --filters - with filters on each entity attribute\n" +
-                "   -o, --order - with sort block\n" +
-                "   --filter-types - with filter type on each entity attribute\n" +
-                "   --order-types - with order type on each entity attribute\n" +
-                "   --from-database host:port:database:login:password [schema | schema table] - reverse engineering of specified database"
+        System.out.println("""
+                USAGE: graphql-generator.jar [options] file_path
+                OPTIONS:
+                   -q, --queries-only - generate only gql-queries and mutations
+                   -h, --help - get current usage info
+                   -a, --all - generate graphql, proto files, gql-queries and mutations
+                   -qn, --no-query - generate graphql, proto files WITHOUT gql-queries and mutations
+                   -f, --filters - with filters on each entity attribute
+                   -o, --order - with sort block
+                   --filter-types - with filter type on each entity attribute
+                   --order-types - with order type on each entity attribute
+                   --from-database host:port:database:login:password [schema | schema table] - reverse engineering of specified database"""
         );
         System.exit(0);
     }
@@ -47,48 +48,15 @@ public class MenuActions {
 
         result.forEach(arg -> {
             switch (arg) {
-                case "-h":
-                case "--help": {
-                    output.add(EMenuActions.HELP);
-                    break;
-                }
-                case "-q":
-                case "--queries-only": {
-                    output.add(EMenuActions.QUERIES_ONLY);
-                    break;
-                }
-                case "-qn":
-                case "--no-query":{
-                    output.add(EMenuActions.NO_QUERY);
-                    break;
-                }
-                case "-f":
-                case "--filters": {
-                    output.add(EMenuActions.FILTERS);
-                    break;
-                }
-                case "-o":
-                case "--order":{
-                    output.add(EMenuActions.ORDER);
-                    break;
-                }
-                case "--filter-types": {
-                    output.add(EMenuActions.FILTER_TYPES);
-                    break;
-                }
-                case "--order-types":{
-                    output.add(EMenuActions.ORDER_TYPES);
-                    break;
-                }
-                case "--from-database": {
-                    output.add(EMenuActions.DATABASE);
-                    break;
-                }
-                case "-a":
-                case "--all": {
-                    output.add(EMenuActions.ALL);
-                    break;
-                }
+                case "-h", "--help" -> output.add(EMenuActions.HELP);
+                case "-q", "--queries-only" -> output.add(EMenuActions.QUERIES_ONLY);
+                case "-qn", "--no-query" -> output.add(EMenuActions.NO_QUERY);
+                case "-f", "--filters" -> output.add(EMenuActions.FILTERS);
+                case "-o", "--order" -> output.add(EMenuActions.ORDER);
+                case "--filter-types" -> output.add(EMenuActions.FILTER_TYPES);
+                case "--order-types" -> output.add(EMenuActions.ORDER_TYPES);
+                case "--from-database" -> output.add(EMenuActions.DATABASE);
+                case "-a", "--all" -> output.add(EMenuActions.ALL);
             }
         });
         return output;
