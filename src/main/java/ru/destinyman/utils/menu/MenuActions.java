@@ -12,6 +12,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 public class MenuActions {
 
@@ -75,7 +76,7 @@ public class MenuActions {
 
         MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
 
-        List<Entity> data = menuActions.contains(EMenuActions.DATABASE) ?
+        Map<String, List<Entity>> data = menuActions.contains(EMenuActions.DATABASE) ?
                 CommonDbUtils.getDataFromDb(args[args.length - 3], args[args.length - 2] + "." + args[args.length - 1])
                 :
                 markdownFileUtils.read(Paths.get(args[args.length - 1]));
@@ -88,8 +89,8 @@ public class MenuActions {
         String entityName = menuActions.contains(EMenuActions.DATABASE) ? fileName : CommonUtils.getFileNameWithoutExtension(args[args.length - 1]);
 
         if (menuActions.contains(EMenuActions.QUERIES_ONLY)){
-            gqlOutput.append(gg.generateOnlyQueries(data, entityName));
-            protoOutput.append(pg.generateOnlyQueries(data, entityName));
+            gqlOutput.append(gg.generateOnlyQueries(data));
+            protoOutput.append(pg.generateOnlyQueries(data));
         }
         if (menuActions.contains(EMenuActions.ALL)){
             gqlOutput.append(gg.generate(data, entityName));
@@ -103,8 +104,8 @@ public class MenuActions {
             protoOutput.append(pg.generate(data, entityName));
         }
         if (menuActions.contains(EMenuActions.NO_QUERY)) {
-            gqlOutput.append(gg.generateEntityType(data, entityName));
-            protoOutput.append(pg.generateEntityType(data, entityName));
+            gqlOutput.append(gg.generateEntityType(data));
+            protoOutput.append(pg.generateEntityType(data));
         }
 
         markdownFileUtils.write(gqlOutput.toString(), Paths.get(graphqlFile));

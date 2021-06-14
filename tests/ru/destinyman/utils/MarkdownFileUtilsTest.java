@@ -7,6 +7,7 @@ import ru.destinyman.utils.file.MarkdownFileUtils;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -59,7 +60,7 @@ class MarkdownFileUtilsTest {
         entities.add(seventhEntity);
 
         MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
-        List<Entity> toCompare = markdownFileUtils.read(Paths.get(pathToFile));
+        Map<String, List<Entity>> toCompare = markdownFileUtils.read(Paths.get(pathToFile));
 
 
         assertEquals(entities, toCompare);

@@ -35,6 +35,7 @@ public class Main {
                 if (checkKey(args[0], "-a", "--all")){
                     MenuActions.executeActions(menuActions, args);
                 }
+                //TODO добавить случай для указания только пути до файла
                 break;
             }
             default: {

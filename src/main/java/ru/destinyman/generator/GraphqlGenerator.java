@@ -5,36 +5,40 @@ import ru.destinyman.utils.file.MarkdownFileUtils;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 public class GraphqlGenerator implements IGenerator{
     @Override
-    public String generate(List<Entity> data, String fileName) {
-
-        String fileNameWithoutExtension = CommonUtils.getFileNameWithoutExtension(fileName);
+    public String generate(Map<String, List<Entity>> data, String fileName) {
 
         String[] orderDirection = {"ASC", "DESC"};
 
-        return  generateQuery(fileNameWithoutExtension) +
-                "\n" +
-                generateMutation(fileNameWithoutExtension) +
-                "\n" +
-                generateEntityType(data, fileNameWithoutExtension) +
-                "\n" +
-                generateListRequest(fileNameWithoutExtension) +
-                "\n" +
-                generateResponse(fileNameWithoutExtension) +
-                "\n" +
-                generateOrderInput(fileNameWithoutExtension) +
-                "\n" +
-                CommonUtils.generateEnum("order_direction", orderDirection) +
-                "\n" +
-                CommonUtils.generateEnum(fileNameWithoutExtension + "ListOrderFields", CommonUtils.getFieldCodes(data)) +
-                "\n" +
-                generateFilterInput(data, fileNameWithoutExtension) +
-                "\n" +
-                CommonUtils.generateEnumFromComment(data) +
-                "\n" +
-                generateSaveInput(data, fileNameWithoutExtension);
+        String result = "";
+        for (String key : data.keySet()) {
+            List<Entity> items = data.get(key);
+            result = generateQuery(key) +
+                    "\n" +
+                    generateMutation(key) +
+                    "\n" +
+                    generateEntityType(data) +
+                    "\n" +
+                    generateListRequest(key) +
+                    "\n" +
+                    generateResponse(key) +
+                    "\n" +
+                    generateOrderInput(key) +
+                    "\n" +
+                    CommonUtils.generateEnum("order_direction", orderDirection) +
+                    "\n" +
+                    CommonUtils.generateEnum(key + "ListOrderFields", CommonUtils.getFieldCodes(items)) +
+                    "\n" +
+                    generateFilterInput(data) +
+                    "\n" +
+                    CommonUtils.generateEnumFromComment(items) +
+                    "\n" +
+                    generateSaveInput(data);
+        }
+        return result;
     }
 
     public String generateQuery(String entityName){
@@ -54,21 +58,35 @@ public class GraphqlGenerator implements IGenerator{
         return outputData.toString();
     }
 
-    public String generateEntityType(List<Entity> data, String entityName){
-        StringBuilder entityType = new StringBuilder("type ");
-        entityType.append(CommonUtils.makeTitleCase(entityName, false)).append(" {\n");
-        generateFieldsWithTypesForEntity(data, entityType);
-        entityType.append("}");
-        return entityType.toString();
+    @Override
+    public String generateEntityType(Map<String, List<Entity>> data){
+        StringBuilder result = new StringBuilder();
+        for (String key : data.keySet()) {
+            StringBuilder entityType = new StringBuilder("type ");
+            entityType.append(CommonUtils.makeTitleCase(key, false)).append(" {\n");
+            generateFieldsWithTypesForEntity(data.get(key), entityType);
+            entityType.append("}\n");
+            result.append(entityType);
+        }
+
+        return result.toString();
     }
 
     @Override
-    public String generateOnlyQueries(List<Entity> data, String entityName) {
-        return generateQuery(entityName) + "\n" +
-        generateMutation(entityName) + "\n" +
-        generateListRequest(entityName) + "\n" +
-        generateResponse(entityName) + "\n" +
-        generateSaveInput(data, entityName);
+    public String generateOnlyQueries(Map<String, List<Entity>> data) {
+        StringBuilder result = new StringBuilder();
+        for (String key : data.keySet()) {
+            result.append(generateQuery(key))
+                    .append("\n")
+                    .append(generateMutation(key))
+                    .append("\n")
+                    .append(generateListRequest(key))
+                    .append("\n")
+                    .append(generateResponse(key))
+                    .append("\n")
+                    .append(generateSaveInput(data));
+        }
+        return result.toString();
     }
 
     private void generateFieldsWithTypesForEntity(List<Entity> data, StringBuilder entityType) {
@@ -122,18 +140,22 @@ public class GraphqlGenerator implements IGenerator{
         return outputData.toString();
     }
 
-    public String generateFilterInput(List<Entity> data, String entityName){
-        StringBuilder outputData = new StringBuilder("input ");
-        String inputName = CommonUtils.makeTitleCase(entityName, false) + "ListFilterInput";
-        outputData.append(inputName).append(" {\n");
-        for (Entity record : data){
-            outputData.append("\"").append(record.getCaption()).append("\"\n");
-            outputData.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
-            outputData.append(convertDataTypeForFilters(record.getDataType(), record.getCode())).append("\n");
+    public String generateFilterInput(Map<String, List<Entity>> data){
+        StringBuilder result = new StringBuilder();
+        for (String key : data.keySet()) {
+            String inputName = CommonUtils.makeTitleCase(key, false) + "ListFilterInput";
+            StringBuilder outputData = new StringBuilder("input ");
+            outputData.append(inputName).append(" {\n");
+            for (Entity record : data.get(key)){
+                outputData.append("\"").append(record.getCaption()).append("\"\n");
+                outputData.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
+                outputData.append(convertDataTypeForFilters(record.getDataType(), record.getCode())).append("\n");
+            }
+            outputData.append("\n}");
+            result.append(outputData);
         }
-        outputData.append("\n}");
 
-        return outputData.toString();
+        return result.toString();
     }
 
     private String convertDataType(String dataType, String code, String reference){
@@ -194,11 +216,16 @@ public class GraphqlGenerator implements IGenerator{
                 "totalCount: Int!\n}";
     }
 
-    public String generateSaveInput(List<Entity> data, String entityName){
-        StringBuilder entityType = new StringBuilder("input Save");
-        entityType.append(CommonUtils.makeTitleCase(entityName, false)).append("Input {\n");
-        generateFieldsWithTypesForEntity(data, entityType);
-        entityType.append("}");
-        return entityType.toString();
+    public String generateSaveInput(Map<String, List<Entity>> data){
+        StringBuilder result = new StringBuilder();
+        for (String key : data.keySet()){
+            StringBuilder entityType = new StringBuilder("input Save");
+            entityType.append(CommonUtils.makeTitleCase(key, false)).append("Input {\n");
+            generateFieldsWithTypesForEntity(data.get(key), entityType);
+            entityType.append("}");
+            result.append(entityType);
+        }
+
+        return result.toString();
     }
 }

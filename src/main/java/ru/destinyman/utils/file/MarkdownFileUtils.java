@@ -10,41 +10,40 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class MarkdownFileUtils implements IFileUtils {
+
     @Override
-    public List<Entity> read(Path fileToRead) {
-
-        List<Entity> result = new ArrayList<>();
-        MarkdownParser markdownParser = new MarkdownParser();
-
-        int index = 0;
+    public Map<String, List<Entity>> read(Path fileToRead) {
+        Map<String, List<Entity>> response = new HashMap<>();
         try (BufferedReader reader = Files.newBufferedReader(fileToRead)) {
-            int i = 0;
+            List<Entity> result = new ArrayList<>();
+            MarkdownParser markdownParser = new MarkdownParser();
+            String entityName = "";
             while (reader.read() != -1) {
                 String currentLine = reader.readLine();
-                Entity record = markdownParser.parse(currentLine);
 
-                if (record.getCode().contains("-")){
-                    index = i;
+                if (currentLine.contains("Таблица")) {
+                    entityName = currentLine.split(" ")[1];
+                    result.clear();
+                    continue;
                 }
+
+                if (currentLine.contains("--") || currentLine.contains("код поля")){
+                    result.clear();
+                    continue;
+                }
+                Entity record = markdownParser.parse(currentLine);
                 result.add(record);
-                i++;
+                response.put(entityName, result);
             }
         } catch (IOException e) {
             e.printStackTrace();
-            System.exit(-1);
         }
-
-        if (index > 0){
-            while (index >= 0) {
-                result.remove(index);
-                index--;
-            }
-        }
-
-        return result;
+        return response;
     }
 
     @Override
@@ -54,6 +53,7 @@ public class MarkdownFileUtils implements IFileUtils {
                 writer.append(textToWrite);
         } catch (IOException e) {
             e.printStackTrace();
+            System.exit(-1);
         }
 
     }
