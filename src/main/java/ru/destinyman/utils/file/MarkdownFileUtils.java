@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MarkdownFileUtils implements IFileUtils {
 
@@ -20,24 +21,30 @@ public class MarkdownFileUtils implements IFileUtils {
     public Map<String, List<Entity>> read(Path fileToRead) {
         Map<String, List<Entity>> response = new HashMap<>();
         try (BufferedReader reader = Files.newBufferedReader(fileToRead)) {
-            List<Entity> result = new ArrayList<>();
+
             MarkdownParser markdownParser = new MarkdownParser();
             String entityName = "";
+            String inputText = "";
             while (reader.read() != -1) {
-                String currentLine = reader.readLine();
+                inputText = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+            }
 
-                if (currentLine.contains("Таблица")) {
-                    entityName = currentLine.split(" ")[1];
-                    result.clear();
+            for (String item : inputText.split("[d+|).\\s]Таблица")) {
+                List<Entity> result = new ArrayList<>();
+                if (item.isEmpty()){
                     continue;
                 }
 
-                if (currentLine.contains("--") || currentLine.contains("код поля")){
-                    result.clear();
-                    continue;
+                String[] itemRecords = item.split("\r\n");
+                entityName = itemRecords[0].trim();
+                for (int i = 1; i < itemRecords.length; i++) {
+                    Entity entity = markdownParser.parse(itemRecords[i]);
+                    if (entity.getCode().isEmpty() || entity.getCode().contains("--") || entity.getCode().toLowerCase().equals("код поля")){
+                        continue;
+                    }
+                    result.add(entity);
                 }
-                Entity record = markdownParser.parse(currentLine);
-                result.add(record);
+
                 response.put(entityName, result);
             }
         } catch (IOException e) {

@@ -1,10 +1,12 @@
 package ru.destinyman.parsers;
 
+import java.util.Arrays;
+
 public class MarkdownParser implements IParser {
 
     @Override
     public Entity parse(String textToParse) {
-        String[] fields = textToParse.split("\\|");
+        String[] fields = Arrays.stream(textToParse.split("\\|")).filter(s -> !s.isEmpty()).toArray(String[]::new);
         String[] completeFields = new String[6];
         for (int i = 0; i < fields.length; i++) {
             fields[i] = fields[i].trim();
