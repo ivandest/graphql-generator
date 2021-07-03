@@ -23,7 +23,7 @@ public class MarkdownFileUtils implements IFileUtils {
         try (BufferedReader reader = Files.newBufferedReader(fileToRead)) {
 
             MarkdownParser markdownParser = new MarkdownParser();
-            String entityName = "";
+            String entityName;
             String inputText = "";
             while (reader.read() != -1) {
                 inputText = reader.lines().collect(Collectors.joining(System.lineSeparator()));
@@ -40,7 +40,7 @@ public class MarkdownFileUtils implements IFileUtils {
                 for (int i = 1; i < itemRecords.length; i++) {
                     Entity entity = markdownParser.parse(itemRecords[i]);
                     if (entity.getCode() == null || entity.getCode().isEmpty() || entity.getCode().contains("--")
-                            || entity.getCode().toLowerCase().equals("код поля") || entity.getCode().matches("[0-9]+")){
+                            || entity.getCode().equalsIgnoreCase("код поля") || entity.getCode().matches("[0-9]+")){
                         continue;
                     }
                     result.add(entity);
