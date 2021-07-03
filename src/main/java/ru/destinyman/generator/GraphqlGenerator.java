@@ -34,7 +34,7 @@ public class GraphqlGenerator implements IGenerator{
                     "\n" +
                     generateFilterInput(data) +
                     "\n" +
-                    CommonUtils.generateEnumFromComment(items) +
+                    CommonUtils.generateEnumFromComment(items, key) +
                     "\n" +
                     generateSaveInput(data);
         }
@@ -94,7 +94,7 @@ public class GraphqlGenerator implements IGenerator{
             entityType.append("\"").append(record.getCaption()).append("\"\n");
             entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
             entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference()));
-            if (record.getIsNullable().equals("NO")) {
+            if (record.getIsNullable() == null || record.getIsNullable().equals("NO")) {
                 entityType.append("!");
             }
             entityType.append("\n");
@@ -167,7 +167,7 @@ public class GraphqlGenerator implements IGenerator{
         switch (dataType.trim()){
             case "id":
             case "uuid": {
-                if (reference.equals(""))
+                if (reference == null || reference.equals(""))
                     return "ID";
                 return makeLinkedEntity(reference);
             }

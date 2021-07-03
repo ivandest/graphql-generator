@@ -7,7 +7,6 @@ import java.util.Map;
 public class ProtoGenerator implements IGenerator {
     @Override
     public String generate(Map<String, List<Entity>> data, String fileName) {
-        String fileNameWithoutExtension = CommonUtils.getFileNameWithoutExtension(fileName);
         String[] orderDirection = {"ASC", "DESC"};
 
         String result = "";
@@ -29,7 +28,7 @@ public class ProtoGenerator implements IGenerator {
                     "\n" +
                     CommonUtils.generateProtoEnum(key + "ListOrderFields", CommonUtils.getFieldCodes(items)) +
                     "\n" +
-                    CommonUtils.generateProtoEnumFromComment(items) +
+                    CommonUtils.generateProtoEnumFromComment(items, key) +
                     "\n" +
                     generateSaveRequest(data) +
                     "\n" +

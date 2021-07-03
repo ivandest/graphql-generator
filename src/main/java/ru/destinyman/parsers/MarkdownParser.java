@@ -1,14 +1,28 @@
 package ru.destinyman.parsers;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 public class MarkdownParser implements IParser {
 
     @Override
     public Entity parse(String textToParse) {
-        String[] fields = Arrays.stream(textToParse.split("\\|")).filter(s -> !s.isEmpty()).toArray(String[]::new);
-        String[] completeFields = new String[6];
+        String[] fields = textToParse.split("\\|");
+        ArrayList<String> rawFields = new ArrayList<>(Arrays.asList(fields));
+
+        if (rawFields.get(0).isEmpty()){
+            rawFields.remove(0);
+        }
+
+        for (int i = 0; i < rawFields.size(); i++){
+            rawFields.set(i, rawFields.get(i).trim());
+        }
+
+        String[] completeFields = rawFields.toArray(new String[6]);
         for (int i = 0; i < fields.length; i++) {
+            if (fields[0].isEmpty()) {
+                continue;
+            }
             fields[i] = fields[i].trim();
             if (i == 3) {
                 fields[i] = convertToBooleanString(fields[i]);

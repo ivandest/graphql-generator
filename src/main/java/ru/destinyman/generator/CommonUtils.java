@@ -2,9 +2,7 @@ package ru.destinyman.generator;
 
 import ru.destinyman.parsers.Entity;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class CommonUtils {
@@ -68,24 +66,24 @@ public class CommonUtils {
         return codes;
     }
 
-    public static String generateEnumFromComment(List<Entity> data) {
+    public static String generateEnumFromComment(List<Entity> data, String entityName) {
         StringBuilder enumText = new StringBuilder();
 
         for (Entity entity : data){
             if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
-                enumText.append(generateEnum(entity.getCode(), entity.getComment().split(","))).append("\n");
+                enumText.append(generateEnum(entityName + entity.getCode(), entity.getComment().split(","))).append("\n");
             }
         }
 
         return enumText.toString();
     }
 
-    public static String generateProtoEnumFromComment(List<Entity> data) {
+    public static String generateProtoEnumFromComment(List<Entity> data, String entityName) {
         StringBuilder enumText = new StringBuilder();
 
         for (Entity entity : data){
             if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
-                enumText.append(generateProtoEnum(entity.getCode(), entity.getComment().split(","))).append("\n");
+                enumText.append(generateProtoEnum(entityName + entity.getCode(), entity.getComment().split(","))).append("\n");
             }
         }
 

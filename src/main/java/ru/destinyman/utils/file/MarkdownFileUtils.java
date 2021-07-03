@@ -39,7 +39,8 @@ public class MarkdownFileUtils implements IFileUtils {
                 entityName = itemRecords[0].trim();
                 for (int i = 1; i < itemRecords.length; i++) {
                     Entity entity = markdownParser.parse(itemRecords[i]);
-                    if (entity.getCode().isEmpty() || entity.getCode().contains("--") || entity.getCode().toLowerCase().equals("код поля")){
+                    if (entity.getCode() == null || entity.getCode().isEmpty() || entity.getCode().contains("--")
+                            || entity.getCode().toLowerCase().equals("код поля") || entity.getCode().matches("[0-9]+")){
                         continue;
                     }
                     result.add(entity);
