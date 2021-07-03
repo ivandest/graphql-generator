@@ -5,78 +5,116 @@ import ru.destinyman.utils.file.MarkdownFileUtils;
 
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 public class GraphqlGenerator implements IGenerator{
     @Override
-    public String generate(List<Entity> data, String fileName) {
-
-        String fileNameWithoutExtension = CommonUtils.getFileNameWithoutExtension(fileName);
+    public String generate(Map<String, List<Entity>> data, String fileName) {
 
         String[] orderDirection = {"ASC", "DESC"};
 
-        return  generateQuery(fileNameWithoutExtension) +
-                "\n" +
-                generateMutation(fileNameWithoutExtension) +
-                "\n" +
-                generateEntityType(data, fileNameWithoutExtension) +
-                "\n" +
-                generateListRequest(fileNameWithoutExtension) +
-                "\n" +
-                generateResponse(fileNameWithoutExtension) +
-                "\n" +
-                generateOrderInput(fileNameWithoutExtension) +
-                "\n" +
-                CommonUtils.generateEnum("order_direction", orderDirection) +
-                "\n" +
-                CommonUtils.generateEnum(fileNameWithoutExtension + "ListOrderFields", CommonUtils.getFieldCodes(data)) +
-                "\n" +
-                generateFilterInput(data, fileNameWithoutExtension) +
-                "\n" +
-                CommonUtils.generateEnumFromComment(data) +
-                "\n" +
-                generateSaveInput(data, fileNameWithoutExtension);
+        String output = """
+                type Query{
+                %s
+                }
+                
+                type Mutation{
+                %s
+                }
+                
+                # Entities
+                %s
+                
+                # Inputs
+                %s
+                
+                # Enums
+                %s
+                """;
+
+        StringBuilder query = new StringBuilder();
+        StringBuilder mutation = new StringBuilder();
+        StringBuilder enums = new StringBuilder();
+        StringBuilder types = new StringBuilder();
+        StringBuilder inputs = new StringBuilder();
+        for (String key : data.keySet()) {
+            query.append(generateQuery(key));
+            mutation.append(generateMutation(key)).append("\n");
+            inputs.append(generateListRequest(key))
+                    .append("\n")
+                    .append(generateResponse(key))
+                    .append("\n")
+                    .append(generateOrderInput(key))
+                    .append("\n");
+            List<Entity> items = data.get(key);
+            enums.append(CommonUtils.generateEnum(key + "ListOrderFields", CommonUtils.getFieldCodes(items)))
+                 .append("\n")
+                 .append(CommonUtils.generateEnumFromComment(items, key))
+                 .append("\n");
+        }
+
+        enums.append(CommonUtils.generateEnum("order_direction", orderDirection))
+                .append("\n");
+        types.append(generateEntityType(data)).append("\n");
+        inputs.append(generateFilterInput(data))
+                .append("\n").append(generateSaveInput(data));
+
+        return String.format(output, query, mutation, types, inputs, enums);
     }
 
     public String generateQuery(String entityName){
         StringBuilder outputData = new StringBuilder();
         String queryString = CommonUtils.makeTitleCase(entityName, false) + "List";
 
-        outputData.append("type Query {\n")
-            .append("get")
+        outputData.append("get")
             .append(queryString)
             .append("(args: ")
             .append(queryString)
             .append("Request): ")
             .append(queryString)
-            .append("Response");
-        outputData.append("\n}");
+            .append("Response")
+            .append("\n");
 
         return outputData.toString();
     }
 
-    public String generateEntityType(List<Entity> data, String entityName){
-        StringBuilder entityType = new StringBuilder("type ");
-        entityType.append(CommonUtils.makeTitleCase(entityName, false)).append(" {\n");
-        generateFieldsWithTypesForEntity(data, entityType);
-        entityType.append("}");
-        return entityType.toString();
+    @Override
+    public String generateEntityType(Map<String, List<Entity>> data){
+        StringBuilder result = new StringBuilder();
+        for (String key : data.keySet()) {
+            StringBuilder entityType = new StringBuilder("type ");
+            entityType.append(CommonUtils.makeTitleCase(key, false)).append(" {\n");
+            generateFieldsWithTypesForEntity(key, data.get(key), entityType);
+            entityType.append("}\n\n");
+            result.append(entityType);
+        }
+
+        return result.toString();
     }
 
     @Override
-    public String generateOnlyQueries(List<Entity> data, String entityName) {
-        return generateQuery(entityName) + "\n" +
-        generateMutation(entityName) + "\n" +
-        generateListRequest(entityName) + "\n" +
-        generateResponse(entityName) + "\n" +
-        generateSaveInput(data, entityName);
+    public String generateOnlyQueries(Map<String, List<Entity>> data) {
+        StringBuilder result = new StringBuilder();
+        for (String key : data.keySet()) {
+            result.append(generateQuery(key))
+                    .append("\n")
+                    .append(generateMutation(key))
+                    .append("\n")
+                    .append(generateListRequest(key))
+                    .append("\n")
+                    .append(generateResponse(key))
+                    .append("\n")
+                    .append(generateSaveInput(data));
+        }
+        return result.toString();
     }
 
-    private void generateFieldsWithTypesForEntity(List<Entity> data, StringBuilder entityType) {
+    private void generateFieldsWithTypesForEntity(String entityName, List<Entity> data, StringBuilder entityType) {
         for (Entity record : data){
             entityType.append("\"").append(record.getCaption()).append("\"\n");
             entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
-            entityType.append(convertDataType(record.getDataType(), record.getCode(), record.getReference()));
-            if (record.getIsNullable().equals("NO")) {
+            entityType.append(convertDataType(entityName, record.getDataType(), record.getCode(), record.getReference()));
+            if (record.getIsNullable() == null || record.getIsNullable().equals("NO")) {
                 entityType.append("!");
             }
             entityType.append("\n");
@@ -87,16 +125,13 @@ public class GraphqlGenerator implements IGenerator{
         StringBuilder outputData = new StringBuilder();
         String queryString = CommonUtils.makeTitleCase(entityName, false);
 
-        outputData.append("type Mutation {\n")
-                .append("save")
+        outputData.append("save")
                 .append(queryString)
                 .append("(input: Save")
                 .append(queryString)
                 .append("Input): ").append(queryString).append("!\n")
                 .append("removeMany").append(queryString).append("s")
-                .append("(ids: [ID!]!): Boolean!")
-        ;
-        outputData.append("\n}");
+                .append("(ids: [ID!]!): Boolean!");
 
         return outputData.toString();
     }
@@ -122,21 +157,25 @@ public class GraphqlGenerator implements IGenerator{
         return outputData.toString();
     }
 
-    public String generateFilterInput(List<Entity> data, String entityName){
-        StringBuilder outputData = new StringBuilder("input ");
-        String inputName = CommonUtils.makeTitleCase(entityName, false) + "ListFilterInput";
-        outputData.append(inputName).append(" {\n");
-        for (Entity record : data){
-            outputData.append("\"").append(record.getCaption()).append("\"\n");
-            outputData.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
-            outputData.append(convertDataTypeForFilters(record.getDataType(), record.getCode())).append("\n");
+    public String generateFilterInput(Map<String, List<Entity>> data){
+        StringBuilder result = new StringBuilder();
+        for (String key : data.keySet()) {
+            String inputName = CommonUtils.makeTitleCase(key, false) + "ListFilterInput";
+            StringBuilder outputData = new StringBuilder("input ");
+            outputData.append(inputName).append(" {\n");
+            for (Entity record : data.get(key)){
+                outputData.append("\"").append(record.getCaption()).append("\"\n");
+                outputData.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
+                outputData.append(convertDataTypeForFilters(key, record.getDataType(), record.getCode())).append("\n");
+            }
+            outputData.append("\n}");
+            result.append(outputData);
         }
-        outputData.append("\n}");
 
-        return outputData.toString();
+        return result.toString();
     }
 
-    private String convertDataType(String dataType, String code, String reference){
+    private String convertDataType(String entityName, String dataType, String code, String reference){
         String converted = "";
 
         if (dataType.contains("("))
@@ -145,7 +184,7 @@ public class GraphqlGenerator implements IGenerator{
         switch (dataType.trim()){
             case "id":
             case "uuid": {
-                if (reference.equals(""))
+                if (reference == null || reference.equals(""))
                     return "ID";
                 return makeLinkedEntity(reference);
             }
@@ -158,13 +197,13 @@ public class GraphqlGenerator implements IGenerator{
                 mfu.write("scalar DateTime", Paths.get("global.graphql"));
                 return "DateTime";
             }
-            case "enum": return CommonUtils.makeEnumName(code);
+            case "enum": return CommonUtils.makeEnumName(entityName + "_" + code);
         }
 
         return converted;
     }
 
-    private String convertDataTypeForFilters(String dataType, String code){
+    private String convertDataTypeForFilters(String entityName, String dataType, String code){
         String converted = "";
 
         if (dataType.contains("("))
@@ -174,7 +213,7 @@ public class GraphqlGenerator implements IGenerator{
             case "id", "uuid" -> "ID";
             case "varchar", "jsonb" -> "String";
             case "timestamp", "timestamptz" -> "DateTime";
-            case "enum" -> CommonUtils.makeEnumName(code);
+            case "enum" -> CommonUtils.makeEnumName(entityName + "_" + code);
             default -> converted;
         };
 
@@ -194,11 +233,20 @@ public class GraphqlGenerator implements IGenerator{
                 "totalCount: Int!\n}";
     }
 
-    public String generateSaveInput(List<Entity> data, String entityName){
-        StringBuilder entityType = new StringBuilder("input Save");
-        entityType.append(CommonUtils.makeTitleCase(entityName, false)).append("Input {\n");
-        generateFieldsWithTypesForEntity(data, entityType);
-        entityType.append("}");
-        return entityType.toString();
+    public String generateSaveInput(Map<String, List<Entity>> data){
+        StringBuilder result = new StringBuilder();
+        for (String key : data.keySet()){
+            StringBuilder entityType = new StringBuilder("input Save");
+            entityType.append(CommonUtils.makeTitleCase(key, false)).append("Input {\n");
+            for (Entity record : data.get(key)) {
+                entityType.append("\"").append(record.getCaption()).append("\"\n");
+                entityType.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
+                entityType.append(convertDataTypeForFilters(key, record.getDataType(), record.getCode())).append("\n");
+            }
+            entityType.append("}");
+            result.append(entityType);
+        }
+
+        return result.toString();
     }
 }

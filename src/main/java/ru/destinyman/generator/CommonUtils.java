@@ -1,6 +1,7 @@
 package ru.destinyman.generator;
 
 import ru.destinyman.parsers.Entity;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -65,24 +66,24 @@ public class CommonUtils {
         return codes;
     }
 
-    public static String generateEnumFromComment(List<Entity> data) {
+    public static String generateEnumFromComment(List<Entity> data, String entityName) {
         StringBuilder enumText = new StringBuilder();
 
         for (Entity entity : data){
             if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
-                enumText.append(generateEnum(entity.getCode(), entity.getComment().split(","))).append("\n");
+                enumText.append(generateEnum(entityName + "_" + entity.getCode(), entity.getComment().split(","))).append("\n");
             }
         }
 
         return enumText.toString();
     }
 
-    public static String generateProtoEnumFromComment(List<Entity> data) {
+    public static String generateProtoEnumFromComment(List<Entity> data, String entityName) {
         StringBuilder enumText = new StringBuilder();
 
         for (Entity entity : data){
             if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
-                enumText.append(generateProtoEnum(entity.getCode(), entity.getComment().split(","))).append("\n");
+                enumText.append(generateProtoEnum(entityName + "_" + entity.getCode(), entity.getComment().split(","))).append("\n");
             }
         }
 
@@ -115,7 +116,17 @@ public class CommonUtils {
     }
 
     public static String getFileNameWithoutExtension(String fileName) {
-        return fileName.indexOf('.') != -1 ? fileName.substring(0, fileName.indexOf('.')) : fileName;
+        String name = fileName.indexOf('.') != -1 ? fileName.substring(0, fileName.indexOf('.')) : fileName;
+        if (name.contains("\\")) {
+            String[] pathElements = name.split("\\\\");
+            return pathElements[pathElements.length - 1];
+        }
+
+        if (name.contains("/")) {
+            String[] pathElements = name.split("/");
+            return pathElements[pathElements.length - 1];
+        }
+        return name;
     }
 
     public static String getFileName(String[] args) {

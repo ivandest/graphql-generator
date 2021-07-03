@@ -5,8 +5,8 @@ import ru.destinyman.parsers.Entity;
 import ru.destinyman.utils.file.MarkdownFileUtils;
 
 import java.nio.file.Paths;
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -16,7 +16,7 @@ class GraphqlGeneratorTest {
 
     String pathToFile = "src/sample_table.md";
     MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
-    List<Entity> data = markdownFileUtils.read(Paths.get(pathToFile));
+    Map<String, List<Entity>> data = markdownFileUtils.read(Paths.get(pathToFile));
     String[] filePathParts = pathToFile.split("/");
     String fileName = filePathParts[filePathParts.length - 1];
 
@@ -44,7 +44,7 @@ class GraphqlGeneratorTest {
 
     @Test
     void generateEntityType() {
-        graphqlGenerator.generateEntityType(data, "SampleEntity");
+        graphqlGenerator.generateEntityType(data);
 
     }
 }

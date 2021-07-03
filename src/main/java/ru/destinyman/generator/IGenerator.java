@@ -2,11 +2,12 @@ package ru.destinyman.generator;
 
 import ru.destinyman.parsers.Entity;
 import java.util.List;
+import java.util.Map;
 
 public interface IGenerator {
-    String generate(List<Entity> data, String fileName);
+    String generate(Map<String, List<Entity>> data, String fileName);
 
-    String generateEntityType(List<Entity> data, String entityName);
+    String generateEntityType(Map<String, List<Entity>> data);
 
-    String generateOnlyQueries(List<Entity> data, String entityName);
+    String generateOnlyQueries(Map<String, List<Entity>> data);
 }
