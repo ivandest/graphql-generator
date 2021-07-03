@@ -71,7 +71,7 @@ public class CommonUtils {
 
         for (Entity entity : data){
             if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
-                enumText.append(generateEnum(entityName + entity.getCode(), entity.getComment().split(","))).append("\n");
+                enumText.append(generateEnum(entityName + "_" + entity.getCode(), entity.getComment().split(","))).append("\n");
             }
         }
 
@@ -83,7 +83,7 @@ public class CommonUtils {
 
         for (Entity entity : data){
             if (!Objects.equals(entity.getComment(), "") && Objects.equals(entity.getDataType(), "enum")){
-                enumText.append(generateProtoEnum(entityName + entity.getCode(), entity.getComment().split(","))).append("\n");
+                enumText.append(generateProtoEnum(entityName + "_" + entity.getCode(), entity.getComment().split(","))).append("\n");
             }
         }
 
