@@ -47,14 +47,14 @@ public class GraphqlGenerator implements IGenerator{
                     .append(generateOrderInput(key))
                     .append("\n");
             List<Entity> items = data.get(key);
-            enums.append(CommonUtils.generateEnum("order_direction", orderDirection))
-                 .append("\n")
-                 .append(CommonUtils.generateEnum(key + "ListOrderFields", CommonUtils.getFieldCodes(items)))
+            enums.append(CommonUtils.generateEnum(key + "ListOrderFields", CommonUtils.getFieldCodes(items)))
                  .append("\n")
                  .append(CommonUtils.generateEnumFromComment(items, key))
                  .append("\n");
         }
 
+        enums.append(CommonUtils.generateEnum("order_direction", orderDirection))
+                .append("\n");
         types.append(generateEntityType(data)).append("\n");
         inputs.append(generateFilterInput(data))
                 .append("\n").append(generateSaveInput(data));

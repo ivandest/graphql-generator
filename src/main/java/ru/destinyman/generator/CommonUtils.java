@@ -116,7 +116,17 @@ public class CommonUtils {
     }
 
     public static String getFileNameWithoutExtension(String fileName) {
-        return fileName.indexOf('.') != -1 ? fileName.substring(0, fileName.indexOf('.')) : fileName;
+        String name = fileName.indexOf('.') != -1 ? fileName.substring(0, fileName.indexOf('.')) : fileName;
+        if (name.contains("\\")) {
+            String[] pathElements = name.split("\\\\");
+            return pathElements[pathElements.length - 1];
+        }
+
+        if (name.contains("/")) {
+            String[] pathElements = name.split("/");
+            return pathElements[pathElements.length - 1];
+        }
+        return name;
     }
 
     public static String getFileName(String[] args) {

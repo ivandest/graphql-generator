@@ -9,38 +9,55 @@ public class ProtoGenerator implements IGenerator {
     public String generate(Map<String, List<Entity>> data, String fileName) {
         String[] orderDirection = {"ASC", "DESC"};
 
-        String result = "";
+        String output = """
+                service %sService {
+                %s
+                }
+                
+                // Entities
+                %s
+                
+                // Inputs
+                %s
+                
+                // Enums
+                %s
+                """;
+
+        StringBuilder service = new StringBuilder();
+        StringBuilder enums = new StringBuilder();
+        StringBuilder types = new StringBuilder();
+        StringBuilder inputs = new StringBuilder();
         for (String key : data.keySet()) {
+            service.append(generateService(key));
             List<Entity> items = data.get(key);
-            result = generateService(key) +
-                    "\n" +
-                    generateListRequest(key) +
-                    "\n" +
-                    generateListResponse(key) +
-                    "\n" +
-                    generateOrderInput(key) +
-                    "\n" +
-                    generateEntityType(data) +
-                    "\n" +
-                    generateFilterInput(items, key) +
-                    "\n" +
-                    CommonUtils.generateProtoEnum("order_direction", orderDirection) +
-                    "\n" +
-                    CommonUtils.generateProtoEnum(key + "ListOrderFields", CommonUtils.getFieldCodes(items)) +
-                    "\n" +
-                    CommonUtils.generateProtoEnumFromComment(items, key) +
-                    "\n" +
-                    generateSaveRequest(data) +
-                    "\n" +
-                    generateSaveResponse(key) +
-                    "\n" +
-                    generateRemoveRequest(key) +
-                    "\n" +
-                    generateRemoveResponse(key);
+            inputs.append(generateListRequest(key))
+                    .append("\n")
+                    .append(generateListResponse(key))
+                    .append("\n")
+                    .append(generateOrderInput(key))
+                    .append("\n")
+                    .append(generateFilterInput(items, key))
+                    .append("\n")
+                    .append(generateSaveResponse(key))
+                    .append("\n")
+                    .append(generateRemoveRequest(key))
+                    .append("\n")
+                    .append(generateRemoveResponse(key))
+                    .append("\n");
+
+            enums.append(CommonUtils.generateProtoEnum(key + "ListOrderFields", CommonUtils.getFieldCodes(items)))
+                    .append("\n")
+                    .append(CommonUtils.generateProtoEnumFromComment(items, key))
+                    .append("\n");
         }
 
+        enums.append(CommonUtils.generateProtoEnum("order_direction", orderDirection))
+                .append("\n");
+        types.append(generateEntityType(data)).append("\n");
+        inputs.append("\n").append(generateSaveRequest(data));
 
-        return result;
+        return String.format(output, CommonUtils.makeTitleCase(fileName, false), service, types, inputs, enums);
     }
 
     @Override
@@ -49,8 +66,8 @@ public class ProtoGenerator implements IGenerator {
         for (String key : data.keySet()) {
             StringBuilder entityType = new StringBuilder("message ");
             entityType.append(CommonUtils.makeTitleCase(key, false)).append(" {\n");
-            generateFieldsWithTypesForEntity(data.get(key), entityType);
-            result.append(entityType);
+            generateFieldsWithTypesForEntity(key, data.get(key), entityType);
+            result.append(entityType).append("\n");
         }
 
         return result.toString();
@@ -71,10 +88,10 @@ public class ProtoGenerator implements IGenerator {
         return result.toString();
     }
 
-    private void generateFieldsWithTypesForEntity(List<Entity> data, StringBuilder entityType){
+    private void generateFieldsWithTypesForEntity(String entityName, List<Entity> data, StringBuilder entityType){
         int i = 1;
         for (Entity record : data){
-            entityType.append(convertDataType(record.getDataType(), record.getCode())).append(" ");
+            entityType.append(convertDataType(record.getDataType(), record.getCode(), entityName)).append(" ");
             entityType.append(CommonUtils.makeSnakeCase(record.getCode(), true)).append(" = ").append(i).append(";\n");
             i++;
         }
@@ -83,14 +100,13 @@ public class ProtoGenerator implements IGenerator {
     }
 
     public String generateService(String entityName) {
-        return "service " + CommonUtils.makeTitleCase(entityName, false) + "Service {\n" + "rpc Get" + CommonUtils.makeTitleCase(entityName, false) + "List (" +
+        return "rpc Get" + CommonUtils.makeTitleCase(entityName, false) + "List (" +
                 CommonUtils.makeTitleCase(entityName, false) + "ListRequest) " +
                 "returns (" + CommonUtils.makeTitleCase(entityName, false) + "ListResponse);\n" +
                 "rpc Save" + CommonUtils.makeTitleCase(entityName, false) + " (Save" + CommonUtils.makeTitleCase(entityName, false) + "Request) " +
                 "returns (Save" + CommonUtils.makeTitleCase(entityName, false) + "Response);\n" +
                 "rpc RemoveMany" + CommonUtils.makeTitleCase(entityName, false) + "s (RemoveMany" + CommonUtils.makeTitleCase(entityName, false) + "Request) " +
-                "returns (RemoveMany" + CommonUtils.makeTitleCase(entityName, false) + "Response);\n" +
-                "}";
+                "returns (RemoveMany" + CommonUtils.makeTitleCase(entityName, false) + "Response);\n";
     }
 
     public String generateListRequest(String entityName){
@@ -114,7 +130,7 @@ public class ProtoGenerator implements IGenerator {
         for (String key : data.keySet()){
             StringBuilder entityType = new StringBuilder("message Save");
             entityType.append(CommonUtils.makeTitleCase(key, false)).append("Request {\n");
-            generateFieldsWithTypesForEntity(data.get(key), entityType);
+            generateFieldsWithTypesForEntity(key, data.get(key), entityType);
             result.append(entityType);
         }
 
@@ -142,7 +158,7 @@ public class ProtoGenerator implements IGenerator {
         StringBuilder outputData = new StringBuilder("message ");
         String inputName = CommonUtils.makeTitleCase(entityName, false) + "ListFilterInput";
         outputData.append(inputName).append(" {\n");
-        generateFieldsWithTypesForEntity(data, outputData);
+        generateFieldsWithTypesForEntity(entityName, data, outputData);
 
         return outputData.toString();
     }
@@ -156,7 +172,7 @@ public class ProtoGenerator implements IGenerator {
         return outputData.toString();
     }
 
-    private String convertDataType(String dataType, String code){
+    private String convertDataType(String dataType, String code, String entityName){
         String converted = "";
 
         if (dataType.contains("("))
@@ -172,7 +188,7 @@ public class ProtoGenerator implements IGenerator {
             case "timestamptz": {
                 return "uint64";
             }
-            case "enum": return CommonUtils.makeEnumName(code);
+            case "enum": return CommonUtils.makeEnumName(entityName + "_" + code);
         }
 
         return converted;
