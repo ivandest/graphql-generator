@@ -7,15 +7,11 @@ import java.util.List;
 import java.util.Map;
 
 public class CommonDbUtils {
-    public static Map<String, List<Entity>> getDataFromDb(String arg, String tableName) {
+    public static Map<String, List<Entity>> getDataFromDb(String arg, String schemaName, String[] tableNames) {
         PostgresConnection pgConn = new PostgresConnection();
         Connection connection = pgConn.create(arg);
-
-        Map<String, List<Entity>> entities;
         PostgresDbObjects postgresDbObjects = new PostgresDbObjects();
 
-        entities = postgresDbObjects.getTableDescription(connection, tableName);
-
-        return entities;
+        return postgresDbObjects.getTableListDescription(connection, schemaName, tableNames);
     }
 }

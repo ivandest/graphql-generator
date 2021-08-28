@@ -9,10 +9,8 @@ import ru.destinyman.utils.database.CommonDbUtils;
 import ru.destinyman.utils.file.MarkdownFileUtils;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class MenuActions {
 
@@ -43,7 +41,7 @@ public class MenuActions {
             return output;
         }
         if (args.length == 3 && args[0].equals("--from-database") && !args[1].startsWith("-") && !args[2].startsWith("-")) {
-            output.add(EMenuActions.ALL);
+            output.add(EMenuActions.DATABASE);
             return output;
         }
 
@@ -66,42 +64,40 @@ public class MenuActions {
     public static void executeActions(ArrayList<EMenuActions> menuActions, String[] args) {
         checkPossibility(menuActions);
 
-        String fileName = menuActions.contains(EMenuActions.DATABASE) ?
-                CommonUtils.makeTitleCase(args[2], false)
-        :
-                CommonUtils.getFileName(args);
-
-        String graphqlFile = fileName.split("\\.")[0] + "Service.graphql";
-        String protoFile = fileName.split("\\.")[0] + "Service.proto";
-
         MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
+        Map<String, List<Entity>> data;
+        String fileName;
+        if (menuActions.contains(EMenuActions.DATABASE)) {
+            data = databaseActions(args).data();
+            fileName = databaseActions(args).schema();
+        } else {
+            data = markdownFileUtils.read(Paths.get(args[args.length - 1]));
+            fileName = CommonUtils.getFileName(args);
+        }
 
-        Map<String, List<Entity>> data = menuActions.contains(EMenuActions.DATABASE) ?
-                CommonDbUtils.getDataFromDb(args[args.length - 3], args[args.length - 2] + "." + args[args.length - 1])
-                :
-                markdownFileUtils.read(Paths.get(args[args.length - 1]));
+        String graphqlFile = CommonUtils.makeTitleCase(fileName + "Service.graphql", false);
+        String protoFile = CommonUtils.makeTitleCase(fileName + "Service.proto", false);
+
         StringBuilder gqlOutput = new StringBuilder("schema {\nquery: Query\nmutation: Mutation\n}\n");
         StringBuilder protoOutput = new StringBuilder("syntax = \"proto3\";\n\npackage org.service;\n");
 
         GraphqlGenerator gg = new GraphqlGenerator();
         ProtoGenerator pg = new ProtoGenerator();
 
-        String entityName = menuActions.contains(EMenuActions.DATABASE) ? fileName : CommonUtils.getFileNameWithoutExtension(args[args.length - 1]);
-
         if (menuActions.contains(EMenuActions.QUERIES_ONLY)){
             gqlOutput.append(gg.generateOnlyQueries(data));
             protoOutput.append(pg.generateOnlyQueries(data));
         }
         if (menuActions.contains(EMenuActions.ALL)){
-            gqlOutput.append(gg.generate(data, entityName));
-            protoOutput.append(pg.generate(data, entityName));
+            gqlOutput.append(gg.generate(data, fileName));
+            protoOutput.append(pg.generate(data, fileName));
         }
         if (menuActions.contains(EMenuActions.HELP)){
             printHelp();
         }
         if (menuActions.size() == 1 && menuActions.contains(EMenuActions.DATABASE)){
-            gqlOutput.append(gg.generate(data, entityName));
-            protoOutput.append(pg.generate(data, entityName));
+            gqlOutput.append(gg.generate(data, fileName));
+            protoOutput.append(pg.generate(data, fileName));
         }
         if (menuActions.contains(EMenuActions.NO_QUERY)) {
             gqlOutput.append(gg.generateEntityType(data));
@@ -110,6 +106,17 @@ public class MenuActions {
 
         markdownFileUtils.write(gqlOutput.toString(), Paths.get(graphqlFile));
         markdownFileUtils.write(protoOutput.toString(), Paths.get(protoFile));
+    }
+    
+    private static DataFromDatabase databaseActions(String[] args) {
+        // TODO сделать разбор аргументов для подключения к БД
+        String fileName = CommonUtils.makeTitleCase(args[args.length - 1], false);
+
+        String schema = getSchemaNameFromArgs(args);
+
+        Map<String, List<Entity>> data = CommonDbUtils.getDataFromDb(getConnectionStringFromArgs(args), schema, getTableNamesFromArgs(args[args.length - 1]));
+
+        return new DataFromDatabase(fileName, data);
     }
 
     static List<EMenuActions> notPossible = List.of(EMenuActions.NO_QUERY, EMenuActions.QUERIES_ONLY);
@@ -120,5 +127,17 @@ public class MenuActions {
         if (menuActions.containsAll(notPossible)){
             throw new Error(ErrorText.QUERIES_KEY_CONFLICT.getMessage());
         }
+    }
+
+    private static String[] getTableNamesFromArgs(String args) {
+        return args.split(",");
+    }
+
+    private static String getConnectionStringFromArgs(String[] args) {
+        return Arrays.stream(args).filter(s -> s.matches("\\w+:\\d+:\\w+:\\w+:\\w+")).collect(Collectors.joining());
+    }
+
+    private static String getSchemaNameFromArgs(String[] args) {
+        return args[2];
     }
 }
