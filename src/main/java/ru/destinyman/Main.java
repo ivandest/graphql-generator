@@ -5,6 +5,8 @@ import ru.destinyman.utils.menu.EMenuActions;
 import ru.destinyman.utils.menu.MenuActions;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Main {
 
@@ -12,41 +14,44 @@ public class Main {
        return arg.equals(shortKey) || arg.equals(longKey);
     }
 
-    static void printHelp(String[] args){
+    static void printHelp(List<String> args){
         ArrayList<EMenuActions> help = new ArrayList<>();
         help.add(EMenuActions.HELP);
         MenuActions.executeActions(help, args);
     }
 
     public static void main(String[] args) {
-
-        ArrayList<EMenuActions> menuActions = MenuActions.getActionFromKeys(args);
-        switch (args.length) {
+        List<String> argsList = Arrays.asList(args);
+        ArrayList<EMenuActions> menuActions = MenuActions.getActionFromKeys(argsList);
+        switch (argsList.size()) {
             case 0: {
-               printHelp(args);
+               printHelp(argsList);
             }
             case 1: {
-                if (args[0].startsWith("-") && !(checkKey(args[0], "-h", "--help"))){
+                if (argsList.get(0).startsWith("-") && !(checkKey(argsList.get(0), "-h", "--help"))){
                     throw new Error(ErrorText.NO_FILEPATH.getMessage());
                 }
-                if (checkKey(args[0], "-h", "--help")){
-                    MenuActions.executeActions(menuActions, args);
+                if (checkKey(argsList.get(0), "-h", "--help")){
+                    MenuActions.executeActions(menuActions, argsList);
                 }
-                if (checkKey(args[0], "-a", "--all")){
-                    MenuActions.executeActions(menuActions, args);
+                if (checkKey(argsList.get(0), "-a", "--all")){
+                    MenuActions.executeActions(menuActions, argsList);
                 }
                 //TODO добавить случай для указания только пути до файла
+                if (argsList.get(0).matches("^(?:[\\w]\\:|\\\\|/)(\\\\[a-z_\\-\\s0-9\\.]+)+\\.(md|csv)$")){
+                    MenuActions.executeActions(menuActions, argsList); // временная заглушка
+                }
                 break;
             }
             default: {
                 if (args[args.length - 1].startsWith("-")){
-                    printHelp(args);
+                    printHelp(argsList);
                 }
                 if (!args[0].startsWith("-")) {
-                    printHelp(args);
+                    printHelp(argsList);
                 }
 
-                MenuActions.executeActions(menuActions, args);
+                MenuActions.executeActions(menuActions, argsList);
                 break;
             }
         }

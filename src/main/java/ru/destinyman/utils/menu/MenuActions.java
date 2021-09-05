@@ -17,6 +17,8 @@ public class MenuActions {
     static public void printHelp(){
         System.out.println("""
                 USAGE: graphql-generator.jar [options] file_path
+                       OR
+                       graphql-generator.jar [options] --from-database host:port:database:login:password [schema | schema table]
                 OPTIONS:
                    -q, --queries-only - generate only gql-queries and mutations
                    -h, --help - get current usage info
@@ -25,27 +27,24 @@ public class MenuActions {
                    -f, --filters - with filters on each entity attribute
                    -o, --order - with sort block
                    --filter-types - with filter type on each entity attribute
-                   --order-types - with order type on each entity attribute
-                   --from-database host:port:database:login:password [schema | schema table] - reverse engineering of specified database"""
+                   --order-types - with order type on each entity attribute"""
         );
         System.exit(0);
     }
 
-    static public ArrayList<EMenuActions> getActionFromKeys(String[] args){
-        List<String> result = Arrays.asList(args);
-
+    static public ArrayList<EMenuActions> getActionFromKeys(List<String> args){
         ArrayList<EMenuActions> output = new ArrayList<>();
 
-        if (args.length == 1 && !args[0].startsWith("-")){
+        if (args.size() == 1 && !args.get(0).startsWith("-")){
             output.add(EMenuActions.ALL);
             return output;
         }
-        if (args.length == 3 && args[0].equals("--from-database") && !args[1].startsWith("-") && !args[2].startsWith("-")) {
+        if (args.contains("--from-database")) {
             output.add(EMenuActions.DATABASE);
             return output;
         }
 
-        result.forEach(arg -> {
+        args.forEach(arg -> {
             switch (arg) {
                 case "-h", "--help" -> output.add(EMenuActions.HELP);
                 case "-q", "--queries-only" -> output.add(EMenuActions.QUERIES_ONLY);
@@ -61,7 +60,7 @@ public class MenuActions {
         return output;
     }
 
-    public static void executeActions(ArrayList<EMenuActions> menuActions, String[] args) {
+    public static void executeActions(ArrayList<EMenuActions> menuActions, List<String> args) {
         checkPossibility(menuActions);
 
         MarkdownFileUtils markdownFileUtils = new MarkdownFileUtils();
@@ -71,7 +70,7 @@ public class MenuActions {
             data = databaseActions(args).data();
             fileName = databaseActions(args).schema();
         } else {
-            data = markdownFileUtils.read(Paths.get(args[args.length - 1]));
+            data = markdownFileUtils.read(Paths.get(args.get(args.size() - 1)));
             fileName = CommonUtils.getFileName(args);
         }
 
@@ -108,13 +107,17 @@ public class MenuActions {
         markdownFileUtils.write(protoOutput.toString(), Paths.get(protoFile));
     }
     
-    private static DataFromDatabase databaseActions(String[] args) {
-        // TODO сделать разбор аргументов для подключения к БД
-        String fileName = CommonUtils.makeTitleCase(args[args.length - 1], false);
+    private static DataFromDatabase databaseActions(List<String> args) {
+        int dbIndex = args.indexOf("--from-database");
+        if (dbIndex == -1){
+            printHelp();
+        }
+        Map<String, String> connectionParameters = parseArgsForDbConnection(args);
+        String schemaName = connectionParameters.get("schema");
+        String fileName = CommonUtils.makeTitleCase(schemaName, false);
 
-        String schema = getSchemaNameFromArgs(args);
-
-        Map<String, List<Entity>> data = CommonDbUtils.getDataFromDb(getConnectionStringFromArgs(args), schema, getTableNamesFromArgs(args[args.length - 1]));
+        Map<String, List<Entity>> data = CommonDbUtils.getDataFromDb(connectionParameters.get("connectionString"), schemaName,
+                getTableNamesFromArgs(connectionParameters.get("tables")));
 
         return new DataFromDatabase(fileName, data);
     }
@@ -130,14 +133,30 @@ public class MenuActions {
     }
 
     private static String[] getTableNamesFromArgs(String args) {
+        if (args == null) return new String[]{};
         return args.split(",");
     }
 
-    private static String getConnectionStringFromArgs(String[] args) {
-        return Arrays.stream(args).filter(s -> s.matches("\\w+:\\d+:\\w+:\\w+:\\w+")).collect(Collectors.joining());
+    private static String getConnectionStringFromArgs(List<String> args) {
+        return args.stream().filter(s -> s.matches("\\w+:\\d+:\\w+:\\w+:\\w+")).collect(Collectors.joining());
     }
 
-    private static String getSchemaNameFromArgs(String[] args) {
-        return args[2];
+    private static String getSchemaNameFromArgs(List<String > args) {
+        return args.get(2);
+    }
+
+    private static Map<String, String> parseArgsForDbConnection(List<String> args) {
+        int dbIndex = args.indexOf("--from-database");
+        HashMap<String, String> connectionParameters = new HashMap<>();
+        List<String> connectionArgs = args.subList(dbIndex, args.size());
+        connectionParameters.put("connectionString", getConnectionStringFromArgs(connectionArgs));
+        connectionParameters.put("schema", getSchemaNameFromArgs(connectionArgs));
+        if (connectionArgs.size() == 3) {
+            connectionParameters.put("tables", null);
+        }
+        if (connectionArgs.size() == 4) {
+            connectionParameters.put("tables", connectionArgs.get(connectionArgs.size() - 1));
+        }
+        return connectionParameters;
     }
 }

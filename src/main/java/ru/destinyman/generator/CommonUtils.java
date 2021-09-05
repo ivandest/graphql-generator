@@ -129,8 +129,8 @@ public class CommonUtils {
         return name;
     }
 
-    public static String getFileName(String[] args) {
-        String pathToFile = args[args.length - 1];
+    public static String getFileName(List<String > args) {
+        String pathToFile = args.get(args.size() - 1);
         String[] filePathParts = pathToFile.split("/");
         return filePathParts[filePathParts.length - 1];
     }

@@ -58,8 +58,8 @@ public class PostgresDbObjects implements IDbObjects {
                         "                     is_nullable, " +
                         "                     column_default " +
                         "from information_schema.\"columns\" c\n" +
-                        "where table_schema = ?" +
-                        "group by table_name;");
+                        "where table_schema = ? " +
+                        "group by table_name, column_name, udt_name, is_nullable, column_default;");
 
                 statement.setString(1, schemaName);
             } else {

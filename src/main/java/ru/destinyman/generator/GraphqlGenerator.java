@@ -198,6 +198,7 @@ public class GraphqlGenerator implements IGenerator{
                 return "DateTime";
             }
             case "enum": return CommonUtils.makeEnumName(entityName + "_" + code);
+            case "int4": return "Int";
         }
 
         return converted;
