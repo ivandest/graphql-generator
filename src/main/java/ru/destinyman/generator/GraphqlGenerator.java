@@ -168,7 +168,7 @@ public class GraphqlGenerator implements IGenerator{
                 outputData.append(CommonUtils.makeTitleCase(record.getCode(), true)).append(": ");
                 outputData.append(convertDataTypeForFilters(key, record.getDataType(), record.getCode())).append("\n");
             }
-            outputData.append("\n}");
+            outputData.append("}\n\n");
             result.append(outputData);
         }
 
@@ -190,7 +190,9 @@ public class GraphqlGenerator implements IGenerator{
             }
             case "varchar":
             case "jsonb":
+            case "text":
                 return "String";
+            case "date":
             case "timestamp":
             case "timestamptz": {
                 MarkdownFileUtils mfu = new MarkdownFileUtils();
@@ -198,6 +200,14 @@ public class GraphqlGenerator implements IGenerator{
                 return "DateTime";
             }
             case "enum": return CommonUtils.makeEnumName(entityName + "_" + code);
+            case "int2":
+            case "int4":
+            case "int8":
+                return "Int";
+            case "boolean":
+            case "bool":
+                return "Boolean";
+            case "numeric": return "Float";
         }
 
         return converted;
@@ -211,9 +221,12 @@ public class GraphqlGenerator implements IGenerator{
 
         return switch (dataType.trim()) {
             case "id", "uuid" -> "ID";
-            case "varchar", "jsonb" -> "String";
-            case "timestamp", "timestamptz" -> "DateTime";
+            case "varchar", "jsonb", "text" -> "String";
+            case "date", "timestamp", "timestamptz" -> "DateTime";
             case "enum" -> CommonUtils.makeEnumName(entityName + "_" + code);
+            case "int4", "int2", "int8" -> "Int";
+            case "boolean", "bool" -> "Boolean";
+            case "numeric" -> "Float";
             default -> converted;
         };
 

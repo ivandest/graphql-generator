@@ -183,12 +183,22 @@ public class ProtoGenerator implements IGenerator {
             case "varchar":
             case "uuid":
             case "jsonb":
+            case "text":
                 return "string";
+            case "date":
             case "timestamp":
             case "timestamptz": {
                 return "uint64";
             }
             case "enum": return CommonUtils.makeEnumName(entityName + "_" + code);
+            case "int2":
+            case "int4":
+            case "int8":
+                return "uint32";
+            case "boolean":
+            case "bool":
+                return "bool";
+            case "numeric": return "double";
         }
 
         return converted;

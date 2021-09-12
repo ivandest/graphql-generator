@@ -3,53 +3,167 @@ package ru.destinyman.utils.database;
 import ru.destinyman.parsers.Entity;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PostgresDbObjects implements IDbObjects {
     @Override
-    public Map<String, List<Entity>> getTableDescription(Connection connection, String objectName) {
+    public Map<String, List<Entity>> getTableDescription(Connection connection, String schemaName, String tableName) {
         Map<String, List<Entity>> result = new HashMap<>();
         try {
-            PreparedStatement statement = connection.prepareStatement("select column_name, " +
-                    "                     udt_name, " +
-                    "                     is_nullable, " +
-                    "                     column_default " +
-                    "from information_schema.\"columns\" c\n" +
-                    "where table_name = ? and table_schema = ?;");
+                PreparedStatement statement = connection.prepareStatement("select column_name, " +
+                        "                     udt_name, " +
+                        "                     is_nullable, " +
+                        "                     column_default " +
+                        "from information_schema.\"columns\" c\n" +
+                        "where table_name = ? and table_schema = ?;");
 
-            String schemaName = objectName.split("\\.")[0];
-            String tableName = objectName.split("\\.")[1];
-            statement.setString(1, tableName);
-            statement.setString(2, schemaName);
+                statement.setString(1, tableName);
+                statement.setString(2, schemaName);
+
+                ResultSet rs = statement.executeQuery();
+
+                ArrayList<Entity> entities = new ArrayList<>();
+                while (rs.next()) {
+                    String column = rs.getString(1);
+                    String dataType = rs.getString(2);
+                    String comment = rs.getString(4);
+                    String reference = null;
+                    if (dataType.contains("enum")) {
+                        comment = getEnumDescription(connection, dataType);
+                        dataType = "enum";
+                    }
+                    if (dataType.contains("id")) {
+                        reference = getReference(connection, schemaName, tableName, column);
+                    }
+                    Entity entity = new Entity(column, "comment", dataType, rs.getString(3), reference, comment);
+                    entities.add(entity);
+                }
+                result.put(tableName, entities);
+                statement.close();
+        } catch (SQLException throwable) {
+            throwable.printStackTrace();
+        }
+        return result;
+    }
+
+    @Override
+    public SortedMap<String, List<Entity>> getTableListDescription(Connection connection, String schemaName, String[] tableNames) {
+        SortedMap<String, List<Entity>> result = new TreeMap<>();
+        try {
+            PreparedStatement statement;
+            if (tableNames.length == 0) {
+                statement = connection.prepareStatement("select table_name, " +
+                        "column_name, " +
+                        "                     udt_name, " +
+                        "                     is_nullable, " +
+                        "                     column_default " +
+                        "from information_schema.\"columns\" c\n" +
+                        "where table_schema = ? " +
+                        "group by table_name, column_name, udt_name, is_nullable, column_default;", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+                statement.setString(1, schemaName);
+            } else {
+                statement = connection.prepareStatement("select table_name, " +
+                        "column_name, " +
+                        "udt_name, " +
+                        "is_nullable, " +
+                        "column_default " +
+                        "from information_schema.\"columns\" c\n" +
+                        "where table_schema = ? " +
+                        "and table_name = any(?) " +
+                        "group by table_name, column_name, udt_name, is_nullable, column_default;", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+
+                statement.setString(1, schemaName);
+
+                Array tableList = connection.createArrayOf("VARCHAR", Arrays.stream(tableNames).toArray());
+                statement.setArray(2, tableList);
+            }
 
             ResultSet rs =  statement.executeQuery();
-
-            ArrayList<Entity> entities = new ArrayList<>();
+            int count = 0;
             while (rs.next()){
-                String column = rs.getString(1);
-                String dataType = rs.getString(2);
-                String comment = rs.getString(4);
+                count++;
+                String tableName = rs.getString(1);
+                result.put(tableName, new ArrayList<>());
+                if (count > 1){
+                    rs.relative(-1);
+                    String previousTableName = rs.getString(1);
+                    rs.next();
+                    if (!Objects.equals(previousTableName, tableName)) {
+                        ArrayList<Entity> entities = new ArrayList<>();
+                        result.put(tableName, entities);
+                    }
+                }
+
+                String column = rs.getString(2);
+                String dataType = rs.getString(3);
+                String comment = rs.getString(5);
                 String reference = null;
                 if (dataType.contains("enum")) {
                     comment = getEnumDescription(connection, dataType);
                     dataType = "enum";
                 }
                 if (dataType.contains("id")) {
-                    reference = getReference(connection, schemaName, tableName, column);
+                    reference = getReference(connection, schemaName, rs.getString(1), column);
                 }
-                Entity entity = new Entity(column, "comment", dataType, rs.getString(3), reference, comment);
-                entities.add(entity);
+                Entity entity = new Entity(column, "comment", dataType, rs.getString(4), reference, comment);
+
             }
-            result.put(objectName, entities);
+
+            for (String key : result.keySet()) {
+                rs.beforeFirst();
+            while (rs.next()){
+                String tableName = rs.getString(1);
+
+                if (!tableName.equals(key)) {
+                    continue;
+                }
+                List<Entity> tableFields = result.get(key);
+
+                String column = rs.getString(2);
+                String dataType = rs.getString(3);
+                String comment = rs.getString(5);
+                String reference = null;
+                if (dataType.contains("enum")) {
+                    comment = getEnumDescription(connection, dataType);
+                    dataType = "enum";
+                }
+                if (dataType.contains("id")) {
+                    reference = getReference(connection, schemaName, rs.getString(1), column);
+                }
+                Entity entity = new Entity(column, "comment", dataType, rs.getString(4), reference, comment);
+                tableFields.add(entity);
+
+            result.put(key, tableFields);
+        }
+    }
+
+
             statement.close();
 
         } catch (SQLException throwable) {
             throwable.printStackTrace();
         }
+
         return result;
+    }
+
+    @Override
+    public ArrayList<String> getTablesInSchema(Connection connection, String schemaName) {
+        ArrayList<String> tables = new ArrayList<>();
+        try {
+            PreparedStatement statement = connection.prepareStatement("select table_name from information_schema.tables where table_schema = ?");
+            statement.setString(1, schemaName);
+
+            ResultSet rs = statement.executeQuery();
+            while (rs.next()){
+                tables.add(rs.getString(1));
+            }
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
+        }
+
+        return tables;
     }
 
     private String getReference(Connection connection, String schemaName, String tableName, String column) {
