@@ -190,6 +190,10 @@ public class ProtoGenerator implements IGenerator {
             }
             case "enum": return CommonUtils.makeEnumName(entityName + "_" + code);
             case "int4": return "uint32";
+            case "boolean":
+            case "bool":
+                return "bool";
+            case "numeric": return "double";
         }
 
         return converted;

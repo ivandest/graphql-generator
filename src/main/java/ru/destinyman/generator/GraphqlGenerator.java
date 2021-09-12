@@ -199,6 +199,10 @@ public class GraphqlGenerator implements IGenerator{
             }
             case "enum": return CommonUtils.makeEnumName(entityName + "_" + code);
             case "int4": return "Int";
+            case "boolean":
+            case "bool":
+                return "Boolean";
+            case "numeric": return "Float";
         }
 
         return converted;
@@ -215,6 +219,9 @@ public class GraphqlGenerator implements IGenerator{
             case "varchar", "jsonb" -> "String";
             case "timestamp", "timestamptz" -> "DateTime";
             case "enum" -> CommonUtils.makeEnumName(entityName + "_" + code);
+            case "int4" -> "Int";
+            case "boolean", "bool" -> "Boolean";
+            case "numeric" -> "Float";
             default -> converted;
         };
 
