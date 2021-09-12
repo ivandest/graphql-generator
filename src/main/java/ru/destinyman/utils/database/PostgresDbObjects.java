@@ -47,8 +47,8 @@ public class PostgresDbObjects implements IDbObjects {
     }
 
     @Override
-    public Map<String, List<Entity>> getTableListDescription(Connection connection, String schemaName, String[] tableNames) {
-        Map<String, List<Entity>> result = new HashMap<>();
+    public SortedMap<String, List<Entity>> getTableListDescription(Connection connection, String schemaName, String[] tableNames) {
+        SortedMap<String, List<Entity>> result = new TreeMap<>();
         try {
             PreparedStatement statement;
             if (tableNames.length == 0) {
@@ -59,7 +59,7 @@ public class PostgresDbObjects implements IDbObjects {
                         "                     column_default " +
                         "from information_schema.\"columns\" c\n" +
                         "where table_schema = ? " +
-                        "group by table_name, column_name, udt_name, is_nullable, column_default;");
+                        "group by table_name, column_name, udt_name, is_nullable, column_default;", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
                 statement.setString(1, schemaName);
             } else {
@@ -71,7 +71,7 @@ public class PostgresDbObjects implements IDbObjects {
                         "from information_schema.\"columns\" c\n" +
                         "where table_schema = ? " +
                         "and table_name = any(?) " +
-                        "group by table_name, column_name, udt_name, is_nullable, column_default;");
+                        "group by table_name, column_name, udt_name, is_nullable, column_default;", ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
 
                 statement.setString(1, schemaName);
 
@@ -80,10 +80,20 @@ public class PostgresDbObjects implements IDbObjects {
             }
 
             ResultSet rs =  statement.executeQuery();
-
-            ArrayList<Entity> entities = new ArrayList<>();
+            int count = 0;
             while (rs.next()){
+                count++;
                 String tableName = rs.getString(1);
+                result.put(tableName, new ArrayList<>());
+                if (count > 1){
+                    rs.relative(-1);
+                    String previousTableName = rs.getString(1);
+                    rs.next();
+                    if (!Objects.equals(previousTableName, tableName)) {
+                        ArrayList<Entity> entities = new ArrayList<>();
+                        result.put(tableName, entities);
+                    }
+                }
 
                 String column = rs.getString(2);
                 String dataType = rs.getString(3);
@@ -97,10 +107,37 @@ public class PostgresDbObjects implements IDbObjects {
                     reference = getReference(connection, schemaName, rs.getString(1), column);
                 }
                 Entity entity = new Entity(column, "comment", dataType, rs.getString(4), reference, comment);
-                entities.add(entity);
 
-                result.put(tableName, entities);
             }
+
+            for (String key : result.keySet()) {
+                rs.beforeFirst();
+            while (rs.next()){
+                String tableName = rs.getString(1);
+
+                if (!tableName.equals(key)) {
+                    continue;
+                }
+                List<Entity> tableFields = result.get(key);
+
+                String column = rs.getString(2);
+                String dataType = rs.getString(3);
+                String comment = rs.getString(5);
+                String reference = null;
+                if (dataType.contains("enum")) {
+                    comment = getEnumDescription(connection, dataType);
+                    dataType = "enum";
+                }
+                if (dataType.contains("id")) {
+                    reference = getReference(connection, schemaName, rs.getString(1), column);
+                }
+                Entity entity = new Entity(column, "comment", dataType, rs.getString(4), reference, comment);
+                tableFields.add(entity);
+
+            result.put(key, tableFields);
+        }
+    }
+
 
             statement.close();
 
